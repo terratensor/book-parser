@@ -31,7 +31,7 @@ func main() {
 	}
 
 	for _, file := range files {
-		fmt.Println(file.Name(), file.IsDir())
+		//fmt.Println(file.Name(), file.IsDir())
 
 		if file.IsDir() == false {
 			bookName := file.Name()
@@ -77,17 +77,21 @@ func createIndex(cl manticore.Client, bookName string, file os.DirEntry) {
 	}
 	defer r.Close()
 
-	for i := 0; ; i++ {
+	// position номер параграфа в индексе
+	position := 1
+	for {
 		p, err := r.Read()
 		if err == io.EOF {
 			return
 		} else if err != nil {
 			panic(err)
 		}
-		fmt.Printf("%d  %v\r\n", i, p)
+
 		// Если строка не пустая, то записываем в индекс
 		if p != "" {
-			createRecord(cl, p, i, bookName)
+			log.Printf("%d  %v\r\n", position, p)
+			createRecord(cl, p, position, bookName)
+			position++
 		}
 	}
 
