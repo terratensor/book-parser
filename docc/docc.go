@@ -137,24 +137,21 @@ func seekParagraph(dec *xml.Decoder) (string, error) {
 				// Удаляет лишние пробелы в начал и в конце строки
 				t = strings.TrimSpace(t)
 
+				// Если строка пустая, то возвращаем строку и ничего не даем
+				if t == "" {
+					return t, nil
+				}
+
+				// Обрамляем строку нужным html тегом
 				switch headerTag {
 				case "h2":
-					// Если строка пустая, то ничего не дает
-					if t != "" {
-						t = fmt.Sprintf("<h2>%v</h2>", t)
-					}
+					t = fmt.Sprintf("<h2>%v</h2>", t)
 					headerTag = ""
 				case "h3":
-					// Если строка пустая, то ничего не дает
-					if t != "" {
-						t = fmt.Sprintf("<h3>%v</h3>", t)
-					}
+					t = fmt.Sprintf("<h3>%v</h3>", t)
 					headerTag = ""
 				default:
-					// Если строка пустая, то ничего не дает
-					if t != "" {
-						t = fmt.Sprintf("<p>%v</p>", t)
-					}
+					t = fmt.Sprintf("<p>%v</p>", t)
 				}
 				return t, nil
 			}
