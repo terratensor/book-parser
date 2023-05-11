@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/audetv/book-parser/docc"
+	"github.com/audetv/book-parser/parser/docc"
 	"github.com/manticoresoftware/go-sdk/manticore"
 	"io"
 	"log"
