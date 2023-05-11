@@ -1,0 +1,22 @@
+version: '3.5'
+
+services:
+  bs-manticore:
+    image: manticoresearch/manticore
+    ports:
+      - "127.0.0.1:9306:9306"
+      - "127.0.0.1:9308:9308"
+      - "127.0.0.1:9312:9312"
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./manticore/data:/var/lib/manticore
+      - ./manticore/log:/var/log/manticore
+      - ./manticore/manticore.conf:/etc/manticoresearch/manticore.conf
+
