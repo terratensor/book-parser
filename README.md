@@ -76,7 +76,7 @@ POST localhost:9308/search
     "index": "booksearch",
     "highlight": {
         "fields": [
-            "content"
+            "text"
         ],
         "limit": 0,
         "no_match_size": 0
