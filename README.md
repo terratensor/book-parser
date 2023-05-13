@@ -67,6 +67,8 @@ book-parser64.exe
 ```
 POST localhost:9308/search
 ```
+![image](https://github.com/audetv/book-parser/assets/129882753/aad0a4c2-e213-46ac-a615-4ac98a8a7f82)
+
 
 Ниже выбрать Body, ниже raw, рядом JSON
 
