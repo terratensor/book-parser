@@ -123,3 +123,10 @@ POST localhost:9308/search
 "limit": 100
 "offset": 100
 ```
+
+### Опции командной строки
+
+```
+-h --help помощь
+-o, --output string   путь хранения файлов для обработки (default "./books/VPSSSR/process/")
+```
