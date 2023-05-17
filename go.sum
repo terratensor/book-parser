@@ -1,2 +1,4 @@
 github.com/manticoresoftware/go-sdk v0.0.0-20200819180014-70a49dc3179d h1:u+uy3Xk0s3y5OyL2Q2ImuaFIz8a+PCIOMIycLtO39Vs=
 github.com/manticoresoftware/go-sdk v0.0.0-20200819180014-70a49dc3179d/go.mod h1:OMzjKD32wzyREQQlr1tHt59bXSipPTu8jC9WP50QkXo=
+github.com/spf13/pflag v1.0.5 h1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA=
+github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=

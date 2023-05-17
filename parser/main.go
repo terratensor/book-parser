@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/audetv/book-parser/parser/docc"
 	"github.com/manticoresoftware/go-sdk/manticore"
+	flag "github.com/spf13/pflag"
 	"io"
 	"log"
 	"os"
@@ -11,7 +12,12 @@ import (
 	"strings"
 )
 
+var outputPath string
+
 func main() {
+
+	flag.StringVarP(&outputPath, "output", "o", "./books/VPSSSR/process/", "путь хранения файлов для обработки")
+	flag.Parse()
 
 	cl := manticore.NewClient()
 	cl.SetServer("localhost", 9312)
@@ -25,7 +31,7 @@ func main() {
 	// создаём таблицу
 	createTable(cl)
 	// читаем все файлы в директории
-	files, err := os.ReadDir("books/VPSSSR/DOCX")
+	files, err := os.ReadDir(outputPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,6 +40,9 @@ func main() {
 		//fmt.Println(file.Name(), file.IsDir())
 
 		if file.IsDir() == false {
+			if file.Name() == ".gitignore" {
+				return
+			}
 			bookName := file.Name()
 			createIndex(cl, bookName, file)
 		}
@@ -70,7 +79,7 @@ func main() {
 func createIndex(cl manticore.Client, bookName string, file os.DirEntry) {
 	// fp := filepath.Clean("./books/master-i-margarita.docx")
 	// fp := filepath.Clean("./books/ob_imitac-prov_deyat_a4-20010324.docx")
-	fp := filepath.Clean(fmt.Sprintf("./books/VPSSSR/DOCX/%v", file.Name()))
+	fp := filepath.Clean(fmt.Sprintf("%v%v", outputPath, file.Name()))
 	r, err := docc.NewReader(fp)
 	if err != nil {
 		panic(err)
