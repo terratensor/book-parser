@@ -162,7 +162,7 @@ func parseParagraphs(node *snowflake.Node, book Book, belongs Belongs, follows F
 
 			// Подготавливаем следующий элемент среза, записываем в него ID текущего параграфа и пустую строку
 			// так как ID следующего параграфа нам еще не известно
-			follows = append(follows, FollowParagraph{paragraph.ID, "NULL"})
+			follows = append(follows, FollowParagraph{paragraph.ID, "0"})
 
 			log.Printf("%d  %v\r\n", position, p)
 			position++
