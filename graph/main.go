@@ -10,7 +10,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
 )
 
 // Books срез книг
@@ -58,6 +60,14 @@ func checkError(message string, err error) {
 	}
 }
 
+// Note структура для хранения обработанных параграфов,
+// в которых римские числа заменены сносками в круглых скобках
+type Note struct {
+	ParagraphID  string
+	RomanNumbers []string
+	Paragraph    string
+}
+
 // outputPath путь по которому лежат книги для париснга
 var outputPath string
 
@@ -88,8 +98,9 @@ func main() {
 		fmt.Println(file.Name(), file.IsDir())
 
 		if file.IsDir() == false {
+			// если файл .gitignore, то ничего не делаем пропускаем и продолжаем цикл
 			if file.Name() == ".gitignore" {
-				return
+				continue
 			}
 			bookName := file.Name()
 
@@ -97,14 +108,12 @@ func main() {
 			//data := []byte(bookName)
 			//id := fmt.Sprintf("%x", md5.Sum(data))
 
-			// Generate a snowflake ID.
+			// Генерируем числовой ИД по алгоритму snowflake.
 			ID := node.Generate().String()
 
 			// создаём книгу и срез параграфов в ней
 			paragraphs := Paragraphs{}
 			book = Book{ID, bookName, paragraphs}
-
-			log.Println(book)
 
 			book, belongs, follows = parseParagraphs(node, book, belongs, follows, file)
 			// добавляем созданную книгу в срез книг
@@ -128,6 +137,9 @@ func parseParagraphs(node *snowflake.Node, book Book, belongs Belongs, follows F
 	// position номер параграфа в индексе
 	position := 1
 
+	// Список параграфов и сносок к ним
+	var notes []Note
+
 	for {
 		p, err := r.Read()
 		if err == io.EOF {
@@ -144,7 +156,10 @@ func parseParagraphs(node *snowflake.Node, book Book, belongs Belongs, follows F
 			ID := node.Generate().String()
 
 			paragraph := Paragraph{ID, p, strconv.Itoa(position)}
+
 			book.Paragraphs = append(book.Paragraphs, paragraph)
+			// формируем и получаем список сносок
+			notes = processParagraphNote(paragraph, notes)
 
 			belongs = append(belongs, BelongToBook{book.ID, paragraph.ID, strconv.Itoa(position)})
 
@@ -164,12 +179,111 @@ func parseParagraphs(node *snowflake.Node, book Book, belongs Belongs, follows F
 			// так как ID следующего параграфа нам еще не известно
 			follows = append(follows, FollowParagraph{paragraph.ID, "0"})
 
-			log.Printf("%d  %v\r\n", position, p)
 			position++
 		}
 	}
 
+	log.Println(notes)
+
+	// обработка подготовленных параграфов со вставленными сносками в круглых скобках
+	for n, paragraph := range book.Paragraphs {
+		book.Paragraphs[n] = replaceParagraph(paragraph, notes)
+	}
+
 	return book, belongs, follows
+}
+
+func replaceParagraph(paragraph Paragraph, notes []Note) Paragraph {
+	for _, note := range notes {
+		if paragraph.ID == note.ParagraphID {
+			paragraph.Text = note.Paragraph
+		}
+	}
+	return paragraph
+}
+
+// processParagraphNote функция проверяет строку-параграф на наличие в ней римского числа,
+// заключенного в квадратные скобки, формирует срез сносок и производит замену
+// римских чисел в обработанных параграфах на сноски заключенные в круглые скобки
+func processParagraphNote(p Paragraph, notes []Note) []Note {
+
+	matched := regexp.MustCompile(`\[M{0,3}(CM|CD|D?C{0,3})?(XC|XL|L?X{0,3})?(IX|IV|V?I{0,3})?]`)
+
+	// возвращает срез совпадений римского числа в строке romanian number, может быть более одной сноски в сроке
+	rns := matched.FindAllString(p.Text, -1)
+
+	//if len(notes) == 0 {
+	//	newNote := Note{
+	//		ParagraphID:  p.ID,
+	//		RomanNumbers: rns,
+	//		Paragraph:    p.Text,
+	//	}
+	//	notes = append(notes, newNote)
+	//} else {
+	//	for _, rn := range rns {
+	//		if rn == "[I]" {
+	//			return notes, true
+	//		}
+	//	}
+	//}
+	//
+	//return notes, false
+
+	//log.Printf(" stack roman number: %v\n", n)
+
+	state := false
+	// Если римское число найдено, то записываем обрабатываем его
+	//for _, rn := range rns {
+	// Итерируемся по срезу записанных сносок, для того чтобы найти уже сохраненные числа, сноски
+	for n, note := range notes {
+		for _, rn := range rns {
+			// Если римское число в записанной сноске равно числу найденному в переданном для обработки параграфе
+			for _, noteRN := range note.RomanNumbers {
+				if noteRN == rn {
+					//log.Println(i, note.RomanNumbers[k], rn)
+					// сначала удаляем из текущего параграфа сноски римское число,
+					// а теги параграфа заменяем на круглые скобки
+					replacer := strings.NewReplacer(rn, "", "<p>", " (", "</p>", ")")
+					newP := replacer.Replace(strings.TrimSpace(p.Text))
+
+					// после заменяем римское число на подготовленную сноску, заключенную в круглые скобки
+					replacer = strings.NewReplacer(rn, newP)
+					note.Paragraph = replacer.Replace(note.Paragraph)
+
+					// заменяем старую сноску, обработанной сноской
+					notes[n] = note
+					state = true
+				}
+			}
+		}
+	}
+
+	//if state {
+	//	state = false
+	//} else {
+	//	newNote := Note{
+	//		ParagraphID: p.ID,
+	//		RomanNumber: rn,
+	//		Paragraph:   p.Text,
+	//	}
+	//	notes = append(notes, newNote)
+	//}
+
+	//}
+
+	// создаём объект сноски и записываем в него срез римских чисел
+	if state {
+		state = false
+	} else {
+		newNote := Note{
+			ParagraphID:  p.ID,
+			RomanNumbers: rns,
+			Paragraph:    p.Text,
+		}
+		notes = append(notes, newNote)
+	}
+
+	return notes
 }
 
 func writeBook(books Books, outputPath string) {
