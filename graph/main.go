@@ -50,11 +50,22 @@ type Note struct {
 	Paragraph    string
 }
 
+type Notes struct {
+	CurrentRN string
+	Values    []Note
+}
+
 // outputPath путь по которому лежат книги для париснга
 var outputPath string
 
 func main() {
-	flag.StringVarP(&outputPath, "output", "o", "./books/VPSSSR/process/", "путь хранения файлов для обработки")
+	flag.StringVarP(
+		&outputPath,
+		"output",
+		"o",
+		"./books/VPSSSR/process/",
+		"путь хранения файлов для обработки",
+	)
 	flag.Parse()
 
 	// читаем все файлы в директории
@@ -106,7 +117,7 @@ func parseParagraphs(book Book, file os.DirEntry) Book {
 	position := 1
 
 	// Список параграфов и сносок к ним
-	var notes []Note
+	var notes Notes
 
 	for {
 		p, err := r.Read()
@@ -118,13 +129,11 @@ func parseParagraphs(book Book, file os.DirEntry) Book {
 
 		// Если строка не пустая, то записываем в индекс
 		if p != "" {
-			// создаём ID 32 разрядный md5 из наименования файла книги
-			//data := []byte(p)
-			//id := fmt.Sprintf("%x", md5.Sum(data))
-			ID := uuid.New().String()
 
+			ID := uuid.New().String()
 			paragraph := Paragraph{ID, p, strconv.Itoa(position)}
 
+			// если эту строку пропустить, удалить, то не нужны будут функции replaceParagraph?
 			book.Paragraphs = append(book.Paragraphs, paragraph)
 			// формируем и получаем список сносок
 			notes = processParagraphNote(paragraph, notes)
@@ -143,8 +152,8 @@ func parseParagraphs(book Book, file os.DirEntry) Book {
 	return book
 }
 
-func replaceParagraph(paragraph Paragraph, notes []Note) Paragraph {
-	for _, note := range notes {
+func replaceParagraph(paragraph Paragraph, notes Notes) Paragraph {
+	for _, note := range notes.Values {
 		if paragraph.ID == note.ParagraphID {
 			paragraph.Text = note.Paragraph
 		}
@@ -155,37 +164,18 @@ func replaceParagraph(paragraph Paragraph, notes []Note) Paragraph {
 // processParagraphNote функция проверяет строку-параграф на наличие в ней римского числа,
 // заключенного в квадратные скобки, формирует срез сносок и производит замену
 // римских чисел в обработанных параграфах на сноски заключенные в круглые скобки
-func processParagraphNote(p Paragraph, notes []Note) []Note {
+func processParagraphNote(p Paragraph, notes Notes) Notes {
 
 	matched := regexp.MustCompile(`\[M{0,3}(CM|CD|D?C{0,3})?(XC|XL|L?X{0,3})?(IX|IV|V?I{0,3})?]`)
 
 	// возвращает срез совпадений римского числа в строке romanian number, может быть более одной сноски в сроке
 	rns := matched.FindAllString(p.Text, -1)
 
-	//if len(notes) == 0 {
-	//	newNote := Note{
-	//		ParagraphID:  p.ID,
-	//		RomanNumbers: rns,
-	//		Paragraph:    p.Text,
-	//	}
-	//	notes = append(notes, newNote)
-	//} else {
-	//	for _, rn := range rns {
-	//		if rn == "[I]" {
-	//			return notes, true
-	//		}
-	//	}
-	//}
-	//
-	//return notes, false
-
-	//log.Printf(" stack roman number: %v\n", n)
-
 	state := false
 	// Если римское число найдено, то записываем обрабатываем его
 	//for _, rn := range rns {
 	// Итерируемся по срезу записанных сносок, для того чтобы найти уже сохраненные числа, сноски
-	for n, note := range notes {
+	for n, note := range notes.Values {
 		for _, rn := range rns {
 			// Если римское число в записанной сноске равно числу найденному в переданном для обработки параграфе
 			for _, noteRN := range note.RomanNumbers {
@@ -201,25 +191,12 @@ func processParagraphNote(p Paragraph, notes []Note) []Note {
 					note.Paragraph = replacer.Replace(note.Paragraph)
 
 					// заменяем старую сноску, обработанной сноской
-					notes[n] = note
+					notes.Values[n] = note
 					state = true
 				}
 			}
 		}
 	}
-
-	//if state {
-	//	state = false
-	//} else {
-	//	newNote := Note{
-	//		ParagraphID: p.ID,
-	//		RomanNumber: rn,
-	//		Paragraph:   p.Text,
-	//	}
-	//	notes = append(notes, newNote)
-	//}
-
-	//}
 
 	// создаём объект сноски и записываем в него срез римских чисел
 	if state {
@@ -230,7 +207,7 @@ func processParagraphNote(p Paragraph, notes []Note) []Note {
 			RomanNumbers: rns,
 			Paragraph:    p.Text,
 		}
-		notes = append(notes, newNote)
+		notes.Values = append(notes.Values, newNote)
 	}
 
 	return notes
