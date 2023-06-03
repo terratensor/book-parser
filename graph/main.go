@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -40,12 +41,12 @@ type Paragraph struct {
 // состояние ParagraphsCompleted установлено в true,
 // когда сборщик завершил обработку параграфов и начал обработку сносок
 // CurrentNote содержит римское число текущей обрабатываемой сноски
-// Notes срез подготовленных сносок
+// Notes map подготовленных сносок
 type Builder struct {
 	Paragraphs          []Paragraph
 	ParagraphsCompleted bool
 	CurrentNote         string
-	Notes               []Note
+	Notes               *Notes
 }
 
 func checkError(message string, err error) {
@@ -54,21 +55,20 @@ func checkError(message string, err error) {
 	}
 }
 
-// Note структура для хранения обработанных параграфов,
+// Notes структура для хранения обработанных параграфов,
 // в которых римские числа заменены сносками в круглых скобках
-type Note struct {
-	ParagraphID  string
-	RomanNumbers []string
-	Paragraph    string
-}
-
 type Notes struct {
-	CurrentRN string
-	Values    []Note
+	m map[string]string
 }
 
 // outputPath путь по которому лежат книги для париснга
 var outputPath string
+
+func NewNotes() *Notes {
+	return &Notes{
+		m: make(map[string]string),
+	}
+}
 
 func main() {
 	flag.StringVarP(
@@ -126,11 +126,9 @@ func parseParagraphs(book Book, file os.DirEntry) Book {
 	defer r.Close()
 
 	builder := new(Builder)
+	builder.Notes = NewNotes()
 	// position номер параграфа в индексе
 	position := 1
-
-	// Список параграфов и сносок к ним
-	//var notes Notes
 
 	for {
 		p, err := r.Read()
@@ -142,48 +140,16 @@ func parseParagraphs(book Book, file os.DirEntry) Book {
 
 		// Если строка не пустая, то записываем в индекс
 		if p != "" {
-
-			//ID := uuid.New().String()
-			//paragraph := Paragraph{ID, p, strconv.Itoa(position)}
-
-			// если эту строку пропустить, удалить, то не нужны будут функции replaceParagraph?
-			//book.Paragraphs = append(book.Paragraphs, paragraph)
-			//builder.Paragraphs = append(book.Paragraphs, paragraph)
-
-			// формируем и получаем список сносок
-
-			// это условие надо положить внутрь функции builder.processParagraph и ее переименовать
-			if builder.ParagraphsCompleted == false {
-
-				builder.processParagraph(p, position)
-
-			} else {
-				log.Printf("Секция сносок position: %v\r\n", position)
-				//notes = builder.processParagraphNote(p)
-			}
-
+			builder.processParagraph(p, position)
 			position++
 		}
 	}
 
-	log.Println(builder.Paragraphs)
-
-	// обработка подготовленных параграфов со вставленными сносками в круглых скобках
-	//for n, paragraph := range book.Paragraphs {
-	//	book.Paragraphs[n] = replaceParagraph(paragraph, notes)
-	//}
+	builder.mergeNotes()
+	book.Paragraphs = builder.Paragraphs
 
 	return book
 }
-
-//func replaceParagraph(paragraph Paragraph, notes Notes) Paragraph {
-//	for _, note := range notes.Values {
-//		if paragraph.ID == note.ParagraphID {
-//			paragraph.Text = note.Paragraph
-//		}
-//	}
-//	return paragraph
-//}
 
 // processParagraphNote функция проверяет строку-параграф на наличие в ней римского числа,
 // заключенного в квадратные скобки, формирует срез сносок и производит замену
@@ -195,41 +161,22 @@ func (b *Builder) processParagraph(p string, position int) {
 	// возвращает срез совпадений римского числа в строке romanian number, может быть более одной сноски в сроке
 	rns := matched.FindAllString(p, -1)
 
-	// Если римское число найдено, то записываем обрабатываем его
-	//for _, rn := range rns {
-	// Итерируемся по срезу записанных сносок, для того чтобы найти уже сохраненные числа, сноски
 	for _, paragraph := range b.Paragraphs {
 
-		// Если в параграфе нет ни одной сноски, len(rns) == 0, и если установлено значение notes.CurrentRN
-		// То надо этот параграф добавить к предыдущему параграфу в сноску, как?
-
 		for _, rn := range rns {
-			// Если римское число в записанной сноске равно числу найденному в переданном для обработки параграфе
+			// Если римское число в записанной сноске равно числу найденному в переданном для обработки параграфе, то это означает, что началась обработка сносок и параграфы закончились
 			for _, noteRN := range paragraph.RomanNumbers {
 				if noteRN == rn {
 					b.ParagraphsCompleted = true
-
-					//// записываем в Notes, что обрабатываем сноску с номером rn
-					//log.Printf("обрабатываем сноску с номером: %v \r\n", rn)
-					////log.Println(i, note.RomanNumbers[k], rn)
-					//// сначала удаляем из текущего параграфа сноски римское число,
-					//// а теги параграфа заменяем на круглые скобки
-					//replacer := strings.NewReplacer(rn, "", "<p>", " (", "</p>", ")")
-					//newP := replacer.Replace(strings.TrimSpace(p))
-					//
-					//// после заменяем римское число на подготовленную сноску, заключенную в круглые скобки
-					//replacer = strings.NewReplacer(rn, newP)
-					//paragraph.Text = replacer.Replace(paragraph.Text)
-					//
-					//// заменяем старую сноску, обработанной сноской
-					//b.Paragraphs[n] = paragraph
-					//state = true
+					// сохраняем текущее римское число сноски, для склейки сносок в одну
+					b.CurrentNote = rn
+					//log.Printf("Секция сносок position: %v\r\n", b.CurrentNote)
 				}
 			}
 		}
 	}
 
-	// создаём объект сноски и записываем в него срез римских чисел
+	// создаём параграф и записываем в него срез римских чисел
 	if b.ParagraphsCompleted == false {
 		paragraph := Paragraph{
 			ID:           uuid.New(),
@@ -239,6 +186,30 @@ func (b *Builder) processParagraph(p string, position int) {
 		}
 
 		b.Paragraphs = append(b.Paragraphs, paragraph)
+	} else {
+		// Заменяем римское число в квадратных скобках на пустую строку, тэг <p> на <span>
+		// семантически неверно внутри тега p параграфа, помещать вложенные параграфы,
+		// поэтому меняем тег параграфа сноски на тег span
+		replacer := strings.NewReplacer(b.CurrentNote, "", "<p>", "<span>", "</p>", "</span>")
+		noteText := replacer.Replace(strings.TrimSpace(p))
+		// Соединяет строки сноски, все бывшие параграфы, теперь span в одну строку
+		result := strings.Join([]string{b.Notes.m[b.CurrentNote], noteText}, "")
+		b.Notes.m[b.CurrentNote] = result
+	}
+}
+
+func (b *Builder) mergeNotes() {
+	for n, paragraph := range b.Paragraphs {
+		for _, rn := range paragraph.RomanNumbers {
+			note := b.Notes.m[rn]
+
+			// Заменяем римское число на подготовленную сноску, заключенную в круглые скобки
+			replacer := strings.NewReplacer(rn, fmt.Sprintf("(%v)", note))
+			paragraph.Text = replacer.Replace(paragraph.Text)
+
+			// заменяем старый параграф, обработанным параграфом со вставленной в него сноской
+			b.Paragraphs[n] = paragraph
+		}
 	}
 }
 
