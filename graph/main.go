@@ -36,6 +36,18 @@ type Paragraph struct {
 	Position string
 }
 
+// Builder сборщик содержит срез подготовленных параграфов Paragraphs,
+// состояние ParagraphsCompleted установлено в true,
+// когда сборщик завершил обработку параграфов и начал обработку сносок
+// CurrentNote содержит римское число текущей обрабатываемой сноски
+// Notes срез подготовленных сносок
+type Builder struct {
+	Paragraphs          []Paragraph
+	ParagraphsCompleted bool
+	CurrentNote         string
+	Notes               []Note
+}
+
 func checkError(message string, err error) {
 	if err != nil {
 		log.Fatal(message, err)
