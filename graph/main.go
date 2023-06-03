@@ -214,9 +214,19 @@ func (b *Builder) mergeNotes() {
 }
 
 func writeBook(books Books, outputPath string) {
+	headerRow := []string{
+		"uuid", "filename", "name",
+	}
+	headerRowParagraph := []string{
+		"uuid", "book_uuid", "text", "position",
+	}
 	// Data array to write to CSV
-	var data [][]string
-	var dataParagraphs [][]string
+	data := [][]string{
+		headerRow,
+	}
+	dataParagraphs := [][]string{
+		headerRowParagraph,
+	}
 
 	for _, book := range books {
 		data = append(data, []string{
@@ -224,11 +234,13 @@ func writeBook(books Books, outputPath string) {
 			// the one from 'headerRow' !!!
 			book.ID,
 			book.Name,
+			book.Name,
 		})
 
 		for _, paragraph := range book.Paragraphs {
 			dataParagraphs = append(dataParagraphs, []string{
 				paragraph.ID.String(),
+				book.ID,
 				paragraph.Text,
 				strconv.Itoa(paragraph.Position),
 			})
