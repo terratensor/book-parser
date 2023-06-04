@@ -32,7 +32,7 @@ type Paragraphs []Paragraph
 // Paragraph параграф из книги
 type Paragraph struct {
 	ID           uuid.UUID
-	RomanNumbers []string
+	RomanNumbers []string // Срез римских чисел содержащихся в параграфе
 	Text         string
 	Position     int
 }
@@ -55,8 +55,7 @@ func checkError(message string, err error) {
 	}
 }
 
-// Notes структура для хранения обработанных параграфов,
-// в которых римские числа заменены сносками в круглых скобках
+// Notes структура для хранения обработанных сносок,
 type Notes struct {
 	m map[string]string
 }
@@ -151,9 +150,8 @@ func parseParagraphs(book Book, file os.DirEntry) Book {
 	return book
 }
 
-// processParagraphNote функция проверяет строку-параграф на наличие в ней римского числа,
-// заключенного в квадратные скобки, формирует срез сносок и производит замену
-// римских чисел в обработанных параграфах на сноски заключенные в круглые скобки
+// processParagraph функция формирует строку-параграф, проверяет строку на наличие в ней римского числа,
+// заключенного в квадратные скобки, после обработки всех параграфов формирует срез сносок
 func (b *Builder) processParagraph(p string, position int) {
 
 	matched := regexp.MustCompile(`\[M{0,3}(CM|CD|D?C{0,3})?(XC|XL|L?X{0,3})?(IX|IV|V?I{0,3})?]`)
@@ -164,19 +162,20 @@ func (b *Builder) processParagraph(p string, position int) {
 	for _, paragraph := range b.Paragraphs {
 
 		for _, rn := range rns {
-			// Если римское число в записанной сноске равно числу найденному в переданном для обработки параграфе, то это означает, что началась обработка сносок и параграфы закончились
+			// Если римское число в записанной сноске равно числу найденному в переданном для обработки параграфе,
+			// то это означает, что началась обработка сносок и параграфы закончились
 			for _, noteRN := range paragraph.RomanNumbers {
 				if noteRN == rn {
 					b.ParagraphsCompleted = true
 					// сохраняем текущее римское число сноски, для склейки сносок в одну
 					b.CurrentNote = rn
-					//log.Printf("Секция сносок position: %v\r\n", b.CurrentNote)
 				}
 			}
 		}
 	}
 
 	// создаём параграф и записываем в него срез римских чисел
+	// сносок, которые содержит параграф
 	if b.ParagraphsCompleted == false {
 		paragraph := Paragraph{
 			ID:           uuid.New(),
