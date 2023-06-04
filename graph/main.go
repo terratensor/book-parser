@@ -21,7 +21,7 @@ type Books []Book
 
 // Book книга
 type Book struct {
-	ID   string
+	ID   uuid.UUID
 	Name string
 	Paragraphs
 }
@@ -101,7 +101,7 @@ func main() {
 			bookName := file.Name()
 
 			// Генерируем UUID
-			ID := uuid.New().String()
+			ID := uuid.New()
 
 			// создаём книгу и срез параграфов в ней
 			paragraphs := Paragraphs{}
@@ -232,7 +232,7 @@ func writeBook(books Books, outputPath string) {
 		data = append(data, []string{
 			// Make sure the property order here matches
 			// the one from 'headerRow' !!!
-			book.ID,
+			book.ID.String(),
 			book.Name,
 			book.Name,
 		})
@@ -240,7 +240,7 @@ func writeBook(books Books, outputPath string) {
 		for _, paragraph := range book.Paragraphs {
 			dataParagraphs = append(dataParagraphs, []string{
 				paragraph.ID.String(),
-				book.ID,
+				book.ID.String(),
 				paragraph.Text,
 				strconv.Itoa(paragraph.Position),
 			})
