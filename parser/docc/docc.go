@@ -128,50 +128,31 @@ func seekParagraph(dec *xml.Decoder) (string, error) {
 		switch tt := token.(type) {
 		case xml.EndElement:
 			if tt.Name.Local == "p" {
-				// Проверят, что строка не является строкой типа «*         *         *»
-				// Если да, то заменяет строку на пустую строку
-				var validT = regexp.MustCompile(`^[\s*]+$`)
-				if validT.MatchString(t) == true {
-					t = ""
-				}
+				// вырезаем мусор
+				t = cutOutTrash(t)
 				// Удаляет лишние пробелы в начал и в конце строки
 				t = strings.TrimSpace(t)
-
 				// Если строка пустая, то возвращаем строку и ничего не даем
 				if t == "" {
 					return t, nil
 				}
-
 				// Обрамляем строку нужным html тегом
-				switch headerTag {
-				case "h2":
-					t = fmt.Sprintf("<h2>%v</h2>", t)
-					headerTag = ""
-				case "h3":
-					t = fmt.Sprintf("<h3>%v</h3>", t)
-					headerTag = ""
-				default:
-					t = fmt.Sprintf("<p>%v</p>", t)
-				}
+				t = wrapperHtmlTag(headerTag, t)
+				headerTag = ""
 				return t, nil
 			}
 		case xml.StartElement:
 			if tt.Name.Local == "pStyle" {
 				for _, attr := range tt.Attr {
-					if attr.Value == "1" {
-						headerTag = "h2"
-					}
-					if attr.Value == "2" {
-						headerTag = "h3"
-					}
+					headerTag = getHeaderTag(attr.Value)
 				}
 			}
-			if tt.Name.Local == "b" {
-				tag = "b"
-			}
-			if tt.Name.Local == "i" {
-				tag = "i"
-			}
+			//if tt.Name.Local == "b" {
+			//	tag = "b"
+			//}
+			//if tt.Name.Local == "i" {
+			//	tag = "i"
+			//}
 			// Ищем ссылку на footnoteReference и присваевает номер сноски в id
 			if tt.Name.Local == "footnoteReference" {
 				fr.id = tt.Attr[0].Value
@@ -203,6 +184,71 @@ func seekParagraph(dec *xml.Decoder) (string, error) {
 			}
 		}
 	}
+}
+
+// cutOutTrash определяет мусорные строки по регулярным выражениям
+// и возвращает пустую строку или строку без изменений
+func cutOutTrash(t string) string {
+	// Проверяет, что строка не является строкой типа «*         *         *»
+	// Проверяет, что строка не является строкой типа «—————————»
+	// Проверяет, что строка не является строкой типа «•••••••»
+	// Проверяет, что строка не является строкой типа «▬▬▬▬▬▬▬»
+	// Проверяет, что строка не является строкой типа «______»
+	var validT = regexp.MustCompile(`^[\s*—•▬_]+$`)
+	if validT.MatchString(t) == true {
+		t = ""
+	}
+	return t
+}
+
+func wrapperHtmlTag(headerTag string, t string) string {
+	switch headerTag {
+	case "h1":
+		t = fmt.Sprintf("<h1>%v</h1>", t)
+		headerTag = ""
+	case "h2":
+		t = fmt.Sprintf("<h2>%v</h2>", t)
+		headerTag = ""
+	case "h3":
+		t = fmt.Sprintf("<h3>%v</h3>", t)
+		headerTag = ""
+	case "h4":
+		t = fmt.Sprintf("<h4>%v</h4>", t)
+		headerTag = ""
+	case "h5":
+		t = fmt.Sprintf("<h5>%v</h5>", t)
+		headerTag = ""
+	case "h6":
+		t = fmt.Sprintf("<h6>%v</h6>", t)
+		headerTag = ""
+	default:
+		t = fmt.Sprintf("<p>%v</p>", t)
+	}
+	return t
+}
+
+// getHeaderTag возвращает html tag заголовка
+func getHeaderTag(value string) string {
+	var tag string
+	switch value {
+	case "Heading1":
+		tag = "h1"
+	case "Heading2":
+		tag = "h2"
+	case "Heading3":
+		tag = "h3"
+	case "Heading4":
+		tag = "h4"
+	case "Heading5":
+		tag = "h5"
+	case "Heading6":
+		tag = "h6"
+	case "Heading7":
+		tag = "h6"
+	default:
+		tag = "p"
+	}
+	return tag
 }
 
 func seekText(dec *xml.Decoder) (string, error) {

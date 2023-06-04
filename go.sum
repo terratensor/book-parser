@@ -1,3 +1,7 @@
+github.com/bwmarrin/snowflake v0.3.0 h1:xm67bEhkKh6ij1790JB83OujPR5CzNe8QuQqAgISZN0=
+github.com/bwmarrin/snowflake v0.3.0/go.mod h1:NdZxfVWX+oR6y2K0o6qAYv6gIOP9rjG0/E9WsDpxqwE=
+github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
+github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/manticoresoftware/go-sdk v0.0.0-20200819180014-70a49dc3179d h1:u+uy3Xk0s3y5OyL2Q2ImuaFIz8a+PCIOMIycLtO39Vs=
 github.com/manticoresoftware/go-sdk v0.0.0-20200819180014-70a49dc3179d/go.mod h1:OMzjKD32wzyREQQlr1tHt59bXSipPTu8jC9WP50QkXo=
 github.com/spf13/pflag v1.0.5 h1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA=
