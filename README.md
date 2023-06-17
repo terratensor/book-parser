@@ -56,7 +56,7 @@ cd ./book-parser
 docker compose up -d
 ```
 
-Запуститься новый контейнер с мантикорой, имя будет book-parser (bs-manticore-1)
+Запустится новый контейнер с мантикорой, имя будет book-parser (bs-manticore-1)
 
 Скопировать файлы или файл для обработки в папку ./books/VPSSSR/process
 
