@@ -58,13 +58,14 @@ func main() {
 	for _, file := range files {
 		//fmt.Println(file.Name(), file.IsDir())
 
+		wg.Add(1)
+
 		if file.IsDir() == false {
 			if file.Name() == ".gitignore" {
 				return
 			}
 			bookName := file.Name()
 
-			wg.Add(1)
 			go createIndex(c, bookName, file)
 		}
 
@@ -74,7 +75,7 @@ func main() {
 		paragraphs := <-c
 		createBulkRecord(cl, paragraphs)
 
-		log.Printf("параграфы сохранены в мантикоре!")
+		log.Printf("файл №%v, параграфы сохранены в мантикоре!", i+1)
 	}
 
 	wg.Wait()
