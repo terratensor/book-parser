@@ -61,12 +61,11 @@ func main() {
 	for _, file := range files {
 		//fmt.Println(file.Name(), file.IsDir())
 
-		wg.Add(1)
-
 		if file.IsDir() == false {
 			if file.Name() == ".gitignore" {
 				return
 			}
+			wg.Add(1)
 			bookName := file.Name()
 
 			go createIndex(c, bookName, file)
@@ -132,6 +131,7 @@ func createIndex(c chan Paragraphs, bookName string, file os.DirEntry) {
 		if err == io.EOF {
 			//log.Printf("%v параграфов обработано: %v", bookName, position)
 			c <- paragraphs
+			return
 		} else if err != nil {
 			panic(err)
 		}
@@ -178,7 +178,7 @@ func createBulkRecord(cl manticore.Client, paragraphs Paragraphs) {
 		escapedParagraph := EscapeString(p.Text)
 		if len(paragraphs) == n+1 {
 			end = ";"
-			log.Printf(p.Book)
+			//log.Printf(p.Book)
 		}
 		values += fmt.Sprintf("('%v', '%v', '%v', '%v', '%v')%v ", escapedParagraph, p.Position, 1, p.Book, time.Now().Unix(), end)
 	}
