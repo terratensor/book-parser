@@ -65,22 +65,25 @@ func main() {
 			if file.Name() == ".gitignore" {
 				return
 			}
-			wg.Add(1)
+			//wg.Add(1)
 			bookName := file.Name()
 
-			go createIndex(c, bookName, file)
+			//go createIndex(c, bookName, file)
+			paragraphs := createIndex(c, bookName, file)
+			createBulkRecord(cl, paragraphs)
+			log.Printf("%v", paragraphs[0].Book)
 		}
 
 	}
 
-	for i := 0; i < len(files); i++ {
-		paragraphs := <-c
-		createBulkRecord(cl, paragraphs)
-		log.Printf("%v", paragraphs[0].Book)
-		//log.Printf("файл №%v, параграфы сохранены в мантикоре!", i+1)
-	}
+	//for i := 0; i < len(files); i++ {
+	//	paragraphs := <-c
+	//	createBulkRecord(cl, paragraphs)
+	//	log.Printf("%v", paragraphs[0].Book)
+	//	//log.Printf("файл №%v, параграфы сохранены в мантикоре!", i+1)
+	//}
 
-	wg.Wait()
+	//wg.Wait()
 	fmt.Println("Все файлы обработаны")
 
 	//bookName := "Время - начинаю про Сталина рассказ….docx"
@@ -110,9 +113,9 @@ func main() {
 	// }
 }
 
-func createIndex(c chan Paragraphs, bookName string, file os.DirEntry) {
+func createIndex(c chan Paragraphs, bookName string, file os.DirEntry) Paragraphs {
 
-	defer wg.Done()
+	//defer wg.Done()
 
 	var paragraph Paragraph
 	var paragraphs Paragraphs
@@ -130,8 +133,9 @@ func createIndex(c chan Paragraphs, bookName string, file os.DirEntry) {
 		p, err := r.Read()
 		if err == io.EOF {
 			//log.Printf("%v параграфов обработано: %v", bookName, position)
-			c <- paragraphs
-			return
+			//c <- paragraphs
+			return paragraphs
+			//return
 		} else if err != nil {
 			panic(err)
 		}
