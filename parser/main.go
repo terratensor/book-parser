@@ -10,11 +10,27 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 )
+
+// Paragraphs срез параграфов книги
+type Paragraphs []Paragraph
+
+// Paragraph параграф из книги
+type Paragraph struct {
+	Text     string
+	Position int
+	Book     string
+}
+
+var wg sync.WaitGroup
 
 var outputPath string
 
 func main() {
+
+	//ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 
 	flag.StringVarP(&outputPath, "output", "o", "./books/VPSSSR/process/", "путь хранения файлов для обработки")
 	flag.Parse()
@@ -36,18 +52,34 @@ func main() {
 		log.Fatal(err)
 	}
 
+	c := make(chan Paragraphs)
+	log.Printf("файлов в обработке: %v", len(files))
+
 	for _, file := range files {
 		//fmt.Println(file.Name(), file.IsDir())
+
+		wg.Add(1)
 
 		if file.IsDir() == false {
 			if file.Name() == ".gitignore" {
 				return
 			}
 			bookName := file.Name()
-			createIndex(cl, bookName, file)
+
+			go createIndex(c, bookName, file)
 		}
 
 	}
+
+	for i := 0; i < len(files); i++ {
+		paragraphs := <-c
+		createBulkRecord(cl, paragraphs)
+
+		log.Printf("файл №%v, параграфы сохранены в мантикоре!", i+1)
+	}
+
+	wg.Wait()
+	fmt.Println("Все файлы обработаны")
 
 	//bookName := "Время - начинаю про Сталина рассказ….docx"
 	// bookName := "Об имитационно-провокационной деятельности"
@@ -76,9 +108,13 @@ func main() {
 	// }
 }
 
-func createIndex(cl manticore.Client, bookName string, file os.DirEntry) {
-	// fp := filepath.Clean("./books/master-i-margarita.docx")
-	// fp := filepath.Clean("./books/ob_imitac-prov_deyat_a4-20010324.docx")
+func createIndex(c chan Paragraphs, bookName string, file os.DirEntry) {
+
+	defer wg.Done()
+
+	var paragraph Paragraph
+	var paragraphs Paragraphs
+
 	fp := filepath.Clean(fmt.Sprintf("%v%v", outputPath, file.Name()))
 	r, err := docc.NewReader(fp)
 	if err != nil {
@@ -91,15 +127,18 @@ func createIndex(cl manticore.Client, bookName string, file os.DirEntry) {
 	for {
 		p, err := r.Read()
 		if err == io.EOF {
-			return
+			log.Printf("%v параграфов обработано: %v", bookName, position)
+			c <- paragraphs
 		} else if err != nil {
 			panic(err)
 		}
 
 		// Если строка не пустая, то записываем в индекс
 		if p != "" {
+			paragraph = Paragraph{Text: p, Position: position, Book: bookName}
+			paragraphs = append(paragraphs, paragraph)
+			//createRecord(cl, p, position, bookName)
 			//log.Printf("%d  %v\r\n", position, p)
-			createRecord(cl, p, position, bookName)
 			position++
 		}
 	}
@@ -111,21 +150,42 @@ func createRecord(cl manticore.Client, p string, i int, bookName string) {
 	// fmt.Printf("%d %v", n, comment)
 	// q := "INSERT INTO ads_search (title) VALUES (\"" + ad.Title + "\")"
 	// str := fmt.Sprintf("replace into viewquestion values(%d, '%s','%s', '%s', '%s', '%s')",
-	str := fmt.Sprintf(`insert into booksearch( 
-                       text,
-                       position,
-                       type,
-                       book,
-                       datetime
-                       ) values('%v','%v', '%v', '%v', '%v')`, p, i, 1, bookName, 0)
+	escapedParagraph := EscapeString(p)
+	str := fmt.Sprintf(`insert into booksearch(text,position,type,book,datetime) values('%v', '%v', '%v', '%v', '%v')`, escapedParagraph, i, 1, bookName, time.Now().Unix())
 	res, _ := cl.Sphinxql(str)
 	// cl.Sphinxql(str)
 	//
 	// fmt.Printf("%v\r\n", res[0].Msg)
 	if strings.Contains(fmt.Sprintf("%v", res), "ERROR") {
+		fmt.Println(p)
 		fmt.Println(res)
+		//panic(res)
 	}
 	// fmt.Println(res)
+}
+
+func createBulkRecord(cl manticore.Client, paragraphs Paragraphs) {
+
+	defer duration(track("сохранено в мантикору за"))
+
+	var values string
+	end := ","
+
+	for n, p := range paragraphs {
+		escapedParagraph := EscapeString(p.Text)
+		if len(paragraphs) == n+1 {
+			end = ";"
+			log.Printf(p.Book)
+		}
+		values += fmt.Sprintf("('%v', '%v', '%v', '%v', '%v')%v ", escapedParagraph, p.Position, 1, p.Book, time.Now().Unix(), end)
+	}
+
+	str := fmt.Sprintf(`INSERT INTO booksearch(text,position,type,book,datetime) VALUES %v`, values)
+	res, _ := cl.Sphinxql(str)
+
+	if strings.Contains(fmt.Sprintf("%v", res), "ERROR") {
+		fmt.Println(res)
+	}
 }
 
 func createTable(cl manticore.Client) {
@@ -137,4 +197,29 @@ func dropTable(cl manticore.Client) {
 	res, err := cl.Sphinxql(`drop table booksearch`)
 	//fmt.Println(res, err)
 	log.Println(res, err)
+}
+
+// EscapeString escapes characters that are treated as special operators by the query language parser.
+//
+// `from` is a string to escape.
+// Returns escaped string.
+func EscapeString(from string) string {
+	dest := make([]byte, 0, 2*len(from))
+	for i := 0; i < len(from); i++ {
+		c := from[i]
+		switch c {
+		case '\\', '(', ')', '|', '-', '!', '@', '~', '"', '\'', '&', '/', '^', '$', '=', '<':
+			dest = append(dest, '\\')
+		}
+		dest = append(dest, c)
+	}
+	return string(dest)
+}
+
+func track(msg string) (string, time.Time) {
+	return msg, time.Now()
+}
+
+func duration(msg string, start time.Time) {
+	log.Printf("%v: %v\n", msg, time.Since(start))
 }
