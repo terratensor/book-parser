@@ -162,15 +162,7 @@ func seekParagraph(dec *xml.Decoder) (string, error) {
 				if err != nil {
 					return "", err
 				}
-				// Если установлено значение id сноски, то из строки текста выбираем последнее слово(разделяем по пробелу)
-				// И заменяем найденное последнее слово, этим же словом обрамленным тегом ссылки со значением id сноски
-				// TODO обработать случаи, когда тэг ссылки попадает между тегами и ломает разметку.
-				// Пример: <i>текст <a data-href="10">ссылка</i></a>
-				if fr.id != "" {
-					nt := strings.Split(t, " ")
-					lastWord := nt[len(nt)-1]
-					t = strings.Replace(t, lastWord, fr.addNote(lastWord), -1)
-				}
+
 				switch tag {
 				case "b":
 					t = t + fmt.Sprintf("<b>%v</b>", text)
@@ -282,13 +274,4 @@ func seekNextTag(dec *xml.Decoder, tag string) error {
 		break
 	}
 	return nil
-}
-
-func (fr *FootnoteReference) addNote(text string) string {
-	if fr.id == "" {
-		return text
-	}
-	str := fmt.Sprintf(`<a data-href="%v">%v</a>`, fr.id, text)
-	fr.id = ""
-	return str
 }

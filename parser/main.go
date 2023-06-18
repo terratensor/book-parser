@@ -98,7 +98,7 @@ func createIndex(cl manticore.Client, bookName string, file os.DirEntry) {
 
 		// Если строка не пустая, то записываем в индекс
 		if p != "" {
-			log.Printf("%d  %v\r\n", position, p)
+			//log.Printf("%d  %v\r\n", position, p)
 			createRecord(cl, p, position, bookName)
 			position++
 		}
@@ -117,7 +117,7 @@ func createRecord(cl manticore.Client, p string, i int, bookName string) {
                        type,
                        book,
                        datetime
-                       ) values('%v','%v', 1, '%v', 0 )`, p, i, bookName)
+                       ) values('%v','%v', '%v', '%v', '%v')`, p, i, 1, bookName, 0)
 	res, _ := cl.Sphinxql(str)
 	// cl.Sphinxql(str)
 	//
