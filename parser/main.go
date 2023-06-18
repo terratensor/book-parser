@@ -43,9 +43,12 @@ func main() {
 	}
 
 	// удаляем таблицу
-	dropTable(cl)
+	//dropTable(cl)
 	// создаём таблицу
-	createTable(cl)
+	err = createTable(cl)
+	if err != nil {
+		log.Printf("%v", err)
+	}
 	// читаем все файлы в директории
 	files, err := os.ReadDir(outputPath)
 	if err != nil {
@@ -74,8 +77,8 @@ func main() {
 	for i := 0; i < len(files); i++ {
 		paragraphs := <-c
 		createBulkRecord(cl, paragraphs)
-
-		log.Printf("файл №%v, параграфы сохранены в мантикоре!", i+1)
+		log.Printf("%v", paragraphs[0].Book)
+		//log.Printf("файл №%v, параграфы сохранены в мантикоре!", i+1)
 	}
 
 	wg.Wait()
@@ -127,7 +130,7 @@ func createIndex(c chan Paragraphs, bookName string, file os.DirEntry) {
 	for {
 		p, err := r.Read()
 		if err == io.EOF {
-			log.Printf("%v параграфов обработано: %v", bookName, position)
+			//log.Printf("%v параграфов обработано: %v", bookName, position)
 			c <- paragraphs
 		} else if err != nil {
 			panic(err)
@@ -166,7 +169,7 @@ func createRecord(cl manticore.Client, p string, i int, bookName string) {
 
 func createBulkRecord(cl manticore.Client, paragraphs Paragraphs) {
 
-	defer duration(track("сохранено в мантикору за"))
+	//defer duration(track("сохранено в мантикору за"))
 
 	var values string
 	end := ","
@@ -188,9 +191,13 @@ func createBulkRecord(cl manticore.Client, paragraphs Paragraphs) {
 	}
 }
 
-func createTable(cl manticore.Client) {
-	res, err := cl.Sphinxql("create table booksearch(`text` text, position integer, type integer, book string, datetime timestamp) morphology='stem_ru'")
-	fmt.Println(res, err)
+func createTable(cl manticore.Client) error {
+	_, err := cl.Sphinxql("create table booksearch(`text` text, position integer, type integer, book string, datetime timestamp) morphology='stem_ru'")
+	if err != nil {
+		return err
+	}
+	//fmt.Println(res, err)
+	return nil
 }
 
 func dropTable(cl manticore.Client) {
