@@ -2,7 +2,7 @@ GOOS=windows GOARCH=amd64 go build -o ./book-parser-pg.exe ./develop/cmd/main.go
 
 ### Парсер docx в postgres
 
-Запустить из папки проекта `docker compose up -d`
+Запустить из папки проекта `docker compose up --build -d`
 запуститься база данных postgres и manticore search
 
 - Будет создана локальная БД с именем book-parser
@@ -36,3 +36,12 @@ book_paragraphs
 Посмотреть данные в БД можно, например, с помощью программы DBeaver Community
 
 https://dbeaver.io/
+
+Остановка БД и мантикоры
+
+`docker-compose down --remove-orphans`
+
+остановка и удаление БД
+
+`docker compose down -v --remove-orphans`
+
