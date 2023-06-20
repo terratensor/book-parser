@@ -45,8 +45,8 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 
 	newBook, err := app.bs.Create(ctx, book.Book{
 		ID:       ID,
-		Name:     filename,
-		Filename: name,
+		Name:     name,
+		Filename: filename,
 	})
 	if err != nil {
 		log.Println(err)
