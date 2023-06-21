@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"unicode/utf8"
 )
 
 type App struct {
@@ -45,10 +46,6 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 	// position номер параграфа в индексе
 	position := 1
 
-	// Генерируем числовой ИД по алгоритму snowflake.
-	//ID := app.node.Generate()
-	// Генерируем UUID
-	//ID := uuid.New()
 	var filename = file.Name()
 	var extension = filepath.Ext(filename)
 	var name = filename[0 : len(filename)-len(extension)]
@@ -74,19 +71,25 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 
 		// Если строка не пустая, то записываем в индекс
 		if text != "" {
+
+			// Кол-во символов в параграфе
+			length := utf8.RuneCountInString(text)
+
 			parsedParagraph := paragraph.Paragraph{
-				ID:       app.node.Generate(),
 				BookID:   newBook.ID,
 				Text:     text,
 				Position: position,
+				Length:   length,
 			}
 
-			//app.ps.Create(ctx, &parsedParagraph)
 			pars = append(pars, parsedParagraph)
+
 			position++
 			param++
+
+			// Записываем пакетам по 2000 параграфов
 			if param == 2000 {
-				err = app.ps.BulkInsert(ctx, pars, param)
+				err = app.ps.BulkInsert(ctx, pars, len(pars))
 				if err != nil {
 					log.Println(err)
 				}

@@ -3,7 +3,6 @@ package paragraph
 import (
 	"context"
 	"fmt"
-	"github.com/bwmarrin/snowflake"
 )
 
 // PrepareParagraphs срез подготовленных параграфов книги
@@ -11,10 +10,10 @@ type PrepareParagraphs []Paragraph
 
 // Paragraph параграф книги
 type Paragraph struct {
-	ID       snowflake.ID
 	BookID   uint
 	Text     string
 	Position int
+	Length   int
 }
 
 type ParagraphStore interface {

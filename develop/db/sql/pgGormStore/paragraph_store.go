@@ -17,6 +17,7 @@ type DBPgParagraph struct {
 	BookID    uint
 	Text      string
 	Position  int
+	Length    int
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt *time.Time
@@ -45,6 +46,7 @@ func (ps *Paragraphs) Create(ctx context.Context, p *paragraph.Paragraph) error 
 		BookID:    p.BookID,
 		Text:      p.Text,
 		Position:  p.Position,
+		Length:    p.Length,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		DeletedAt: nil,
@@ -62,6 +64,7 @@ func (ps *Paragraphs) BulkInsert(ctx context.Context, paragraphs []paragraph.Par
 			BookID:    p.BookID,
 			Text:      p.Text,
 			Position:  p.Position,
+			Length:    p.Length,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 			DeletedAt: nil,
