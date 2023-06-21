@@ -24,10 +24,10 @@
 Будет произведена обработка docx файлов и запись их в таблицы БД:
 ```
 books
-    uuid, name, filename, created_at, updated_at, deleted_at
+    id, name, filename, created_at, updated_at, deleted_at
 
 book_paragraphs
-    uuid, book_uuid, text, position, created_at, updated_at, deleted_at
+    id, book_id, text, position, length, created_at, updated_at, deleted_at
     
 ```
 
@@ -61,6 +61,18 @@ gzip -d book-parser-backup-filename.gz
 
 psql -U app -d lib < book-parser-backup-filename.sql
 
+```
+
+### Запуск indexer мантикоры в первый раз
+
+```
+docker exec -it book-parser-manticore indexer paragraphs
+```
+
+### Запуск indexer мантикоры последующие разы 
+
+```
+docker exec -it book-parser-manticore indexer paragraphs --rotate
 ```
 
 ##### Сборка бинарника, нужно для разработки:

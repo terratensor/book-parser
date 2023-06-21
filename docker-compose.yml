@@ -2,6 +2,7 @@ version: '3.5'
 
 services:
   bs-manticore:
+    container_name: book-parser-manticore
     image: manticoresearch/manticore
     ports:
       - "127.0.0.1:9306:9306"
