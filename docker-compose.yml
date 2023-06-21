@@ -21,6 +21,7 @@ services:
       - ./manticore/manticore.conf:/etc/manticoresearch/manticore.conf
 
   postgres-book-parser:
+    container_name: book-parser-postgres
     build:
       context: ./docker/postgres
       dockerfile: Dockerfile

@@ -45,3 +45,22 @@ https://dbeaver.io/
 
 `docker compose down -v --remove-orphans`
 
+
+#### Бэкап postgres БД:
+```
+docker exec -it book-parser-postgres bash
+
+pg_dump --dbname=book-parser --username=app --host=postgres-book-parser | gzip -9 > book-parser-backup-filename.gz
+
+```
+
+Копировать файл бэкапа в контейнер докера для восстановления БД
+```
+
+cp book-parser-backup-filename.gz book-parser-postgres:app/book-parser-backup-filename.gz
+
+gzip -d book-parser-backup-filename.gz
+
+psql -U app -d lib < book-parser-backup-filename.sql
+
+```
