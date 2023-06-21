@@ -16,8 +16,8 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - ./manticore/data:/var/lib/manticore
-      - ./manticore/log:/var/log/manticore
+      - manticore:/var/lib/manticore
+      - manticore:/var/log/manticore
       - ./manticore/manticore.conf:/etc/manticoresearch/manticore.conf
 
   postgres-book-parser:
@@ -29,7 +29,7 @@ services:
       APP_ENV: dev
       POSTGRES_USER: app
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: book-parser
+      POSTGRES_DB: common-library
     volumes:
       - postgres-bp:/var/lib/postgresql/data
     ports:
@@ -37,3 +37,4 @@ services:
 
 volumes:
   postgres-bp:
+  manticore:

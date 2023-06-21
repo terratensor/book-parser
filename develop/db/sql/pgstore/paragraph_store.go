@@ -3,20 +3,16 @@ package pgstore
 import (
 	"context"
 	"database/sql"
-	"github.com/audetv/book-parser/develop/app/repos/book"
 	"github.com/audetv/book-parser/develop/app/repos/paragraph"
-	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v4/stdlib" // Postgresql driver
-	"strconv"
-	"strings"
 	"time"
 )
 
-var _ book.BookStore = &Books{}
+//var _ paragraph.ParagraphStore = &Paragraphs{}
 
 type DBPgParagraph struct {
-	UUID      uuid.UUID  `db:"uuid"`
-	BookUUID  uuid.UUID  `db:"book_uuid"`
+	ID        uint       `db:"id"`
+	BookID    uint       `db:"book_id"`
 	Text      string     `db:"text"`
 	Position  int        `db:"position"`
 	CreatedAt time.Time  `db:"created_at"`
@@ -50,8 +46,7 @@ func (ps *Paragraphs) Close() {
 
 func (ps *Paragraphs) Create(ctx context.Context, p *paragraph.Paragraph) error {
 	dbp := &DBPgParagraph{
-		UUID:      p.ID,
-		BookUUID:  p.BookID,
+		BookID:    p.BookID,
 		Text:      p.Text,
 		Position:  p.Position,
 		CreatedAt: time.Now(),
@@ -59,10 +54,10 @@ func (ps *Paragraphs) Create(ctx context.Context, p *paragraph.Paragraph) error 
 	}
 
 	_, err := ps.db.ExecContext(ctx, `INSERT INTO book_paragraphs
-    (uuid, book_uuid, text, position, created_at, updated_at, deleted_at)
+    (id, book_id, text, position, created_at, updated_at, deleted_at)
     values ($1, $2, $3, $4, $5, $6, $7)`,
-		dbp.UUID,
-		dbp.BookUUID,
+		dbp.ID,
+		dbp.BookID,
 		dbp.Text,
 		dbp.Position,
 		dbp.CreatedAt,
@@ -76,33 +71,6 @@ func (ps *Paragraphs) Create(ctx context.Context, p *paragraph.Paragraph) error 
 	return nil
 }
 
-func (ps *Paragraphs) BulkInsert(ctx context.Context, paragraphs *paragraph.PrepareParagraphs) error {
-	var values []interface{}
-	for _, row := range *paragraphs {
-		values = append(values, row.ID, row.BookID, row.Text, row.Position, time.Now(), time.Now(), nil)
-	}
-
-	stmt := Build(`INSERT INTO test(uuid, book_uuid, text, position, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, len(*paragraphs))
-
-	_, err := ps.db.ExecContext(ctx, stmt)
-	if err != nil {
-		return err
-	}
-
+func (ps *Paragraphs) BulkInsert(ctx context.Context, paragraphs []paragraph.Paragraph, batchSize int) error {
 	return nil
-}
-
-func Build(stmt string, len int) string {
-	beforVals := stmt[:strings.IndexByte(stmt, '?')-1]
-	afterVals := stmt[strings.LastIndexByte(stmt, '?')+2:]
-	vals := stmt[strings.IndexByte(stmt, '?')-1 : strings.LastIndexByte(stmt, '?')+2]
-	vals += strings.Repeat(","+vals, len)
-	stmt = beforVals + vals + afterVals
-	n := 0
-	for strings.IndexByte(stmt, '?') != -1 {
-		n++
-		param := "$" + strconv.Itoa(n)
-		stmt = strings.Replace(stmt, "?", param, 1)
-	}
-	return stmt
 }

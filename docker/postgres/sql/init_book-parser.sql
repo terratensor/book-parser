@@ -1,22 +1,22 @@
 CREATE TABLE public.books
 (
-    uuid       uuid        NOT NULL,
+    id         bigint   NOT NULL,
     name       varchar,
     filename   varchar,
     created_at timestamptz NOT NULL,
     updated_at timestamptz NOT NULL,
-    deleted_at timestamptz NULL,
-    CONSTRAINT books_pk PRIMARY KEY (uuid)
+    deleted_at timestamptz NULL
+--     CONSTRAINT books_pk PRIMARY KEY (uuid)
 );
 
 CREATE TABLE public.book_paragraphs
 (
-    uuid       uuid        NOT NULL,
-    book_uuid  uuid        NOT NULL,
+    id         bigint         NOT NULL,
+    book_id    bigint         NOT NULL,
     text       text,
     position   int,
     created_at timestamptz NOT NULL,
     updated_at timestamptz NOT NULL,
-    deleted_at timestamptz NULL,
-    CONSTRAINT book_paragraphs_pk PRIMARY KEY (uuid)
+    deleted_at timestamptz NULL
+--     CONSTRAINT book_paragraphs_pk PRIMARY KEY (uuid)
 );

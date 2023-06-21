@@ -3,7 +3,7 @@ package paragraph
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
+	"github.com/bwmarrin/snowflake"
 )
 
 // PrepareParagraphs срез подготовленных параграфов книги
@@ -11,15 +11,15 @@ type PrepareParagraphs []Paragraph
 
 // Paragraph параграф книги
 type Paragraph struct {
-	ID       uuid.UUID
-	BookID   uuid.UUID
+	ID       snowflake.ID
+	BookID   uint
 	Text     string
 	Position int
 }
 
 type ParagraphStore interface {
 	Create(ctx context.Context, paragraph *Paragraph) error
-	BulkInsert(ctx context.Context, paragraphs *PrepareParagraphs) error
+	BulkInsert(ctx context.Context, paragraphs []Paragraph, batchSize int) error
 }
 
 type Paragraphs struct {
@@ -36,6 +36,14 @@ func (ps *Paragraphs) Create(ctx context.Context, paragraph *Paragraph) error {
 
 	err := ps.store.Create(ctx, paragraph)
 
+	if err != nil {
+		return fmt.Errorf("create paragraph error: %w", err)
+	}
+	return nil
+}
+
+func (ps *Paragraphs) BulkInsert(ctx context.Context, paragraphs []Paragraph, batchSize int) error {
+	err := ps.store.BulkInsert(ctx, paragraphs, batchSize)
 	if err != nil {
 		return fmt.Errorf("create paragraph error: %w", err)
 	}

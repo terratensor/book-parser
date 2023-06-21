@@ -5,6 +5,7 @@ import (
 	"github.com/audetv/book-parser/develop/app/repos/book"
 	"github.com/audetv/book-parser/develop/app/repos/paragraph"
 	"github.com/audetv/book-parser/develop/app/starter"
+	"github.com/audetv/book-parser/develop/db/sql/pgGormStore"
 	"github.com/audetv/book-parser/develop/db/sql/pgstore"
 	flag "github.com/spf13/pflag"
 	"log"
@@ -32,14 +33,14 @@ func main() {
 
 	storeType := os.Getenv("PARSER_STORE")
 	if storeType == "" {
-		storeType = "pg"
+		storeType = "gorm"
 	}
 
 	switch storeType {
 	case "pg":
 		dsn := os.Getenv("PG_DSN")
 		if dsn == "" {
-			dsn = "postgres://app:secret@localhost:54322/book-parser?sslmode=disable"
+			dsn = "postgres://app:secret@localhost:54322/common-library?sslmode=disable"
 		}
 		pgBookStore, err := pgstore.NewBooks(dsn)
 		pgParagraphStore, err := pgstore.NewParagraphs(dsn)
@@ -48,6 +49,19 @@ func main() {
 		}
 		defer pgBookStore.Close()
 		defer pgParagraphStore.Close()
+		bookStore = pgBookStore
+		paragraphStore = pgParagraphStore
+	case "gorm":
+		dsn := os.Getenv("PG_DSN")
+		if dsn == "" {
+			dsn = "host=localhost user=app password=secret dbname=common-library port=54322 sslmode=disable TimeZone=Europe/Moscow"
+		}
+		pgBookStore, err := pgGormStore.NewBooks(dsn)
+		pgParagraphStore, err := pgGormStore.NewParagraphs(dsn)
+
+		if err != nil {
+			log.Fatal(err)
+		}
 		bookStore = pgBookStore
 		paragraphStore = pgParagraphStore
 	default:

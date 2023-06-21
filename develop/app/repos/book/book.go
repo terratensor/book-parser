@@ -3,18 +3,17 @@ package book
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 )
 
 // Book книга
 type Book struct {
-	ID       uuid.UUID
+	ID       uint
 	Name     string
 	Filename string
 }
 
 type BookStore interface {
-	Create(ctx context.Context, b Book) (*uuid.UUID, error)
+	Create(ctx context.Context, b Book) (uint, error)
 }
 
 type Books struct {
@@ -28,11 +27,11 @@ func NewBooks(store BookStore) *Books {
 }
 
 func (bs *Books) Create(ctx context.Context, b Book) (*Book, error) {
-	b.ID = uuid.New()
+	//b.ID = uuid.New()
 	id, err := bs.store.Create(ctx, b)
 	if err != nil {
 		return nil, fmt.Errorf("create book error: %w", err)
 	}
-	b.ID = *id
+	b.ID = id
 	return &b, nil
 }

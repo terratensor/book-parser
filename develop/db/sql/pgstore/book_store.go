@@ -4,15 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"github.com/audetv/book-parser/develop/app/repos/book"
-	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v4/stdlib" // Postgresql driver
 	"time"
 )
 
-var _ book.BookStore = &Books{}
+//var _ book.BookStore = &Books{}
 
 type DBPgBook struct {
-	UUID      uuid.UUID  `db:"uuid"`
+	ID        uint       `db:"id"`
 	Name      string     `db:"name"`
 	Filename  string     `db:"filename"`
 	CreatedAt time.Time  `db:"created_at"`
@@ -44,9 +43,9 @@ func (bs *Books) Close() {
 	bs.db.Close()
 }
 
-func (bs *Books) Create(ctx context.Context, b book.Book) (*uuid.UUID, error) {
+func (bs *Books) Create(ctx context.Context, b book.Book) (uint, error) {
 	dbp := &DBPgBook{
-		UUID:      b.ID,
+		ID:        b.ID,
 		Name:      b.Name,
 		Filename:  b.Filename,
 		CreatedAt: time.Now(),
@@ -54,9 +53,9 @@ func (bs *Books) Create(ctx context.Context, b book.Book) (*uuid.UUID, error) {
 	}
 
 	_, err := bs.db.ExecContext(ctx, `INSERT INTO books
-    (uuid, name, filename, created_at, updated_at, deleted_at)
+    (id, name, filename, created_at, updated_at, deleted_at)
     values ($1, $2, $3, $4, $5, $6)`,
-		dbp.UUID,
+		dbp.ID,
 		dbp.Name,
 		dbp.Filename,
 		dbp.CreatedAt,
@@ -64,8 +63,8 @@ func (bs *Books) Create(ctx context.Context, b book.Book) (*uuid.UUID, error) {
 		nil,
 	)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return &b.ID, nil
+	return dbp.ID, nil
 }

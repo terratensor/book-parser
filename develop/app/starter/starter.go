@@ -6,7 +6,7 @@ import (
 	"github.com/audetv/book-parser/develop/app/repos/book"
 	"github.com/audetv/book-parser/develop/app/repos/paragraph"
 	"github.com/audetv/book-parser/parser/docc"
-	"github.com/google/uuid"
+	"github.com/bwmarrin/snowflake"
 	"io"
 	"log"
 	"os"
@@ -14,14 +14,22 @@ import (
 )
 
 type App struct {
-	bs *book.Books
-	ps *paragraph.Paragraphs
+	bs   *book.Books
+	ps   *paragraph.Paragraphs
+	node *snowflake.Node
 }
 
 func NewApp(bookStore book.BookStore, paragraphStore paragraph.ParagraphStore) *App {
+	// Создаём новый узел Node с номером 1 для генерации IDs по алгоритму snowflake
+	node, err := snowflake.NewNode(1)
+	if err != nil {
+		panic(err)
+	}
+
 	app := &App{
-		bs: book.NewBooks(bookStore),
-		ps: paragraph.NewParagraphs(paragraphStore),
+		bs:   book.NewBooks(bookStore),
+		ps:   paragraph.NewParagraphs(paragraphStore),
+		node: node,
 	}
 	return app
 }
@@ -37,14 +45,15 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 	// position номер параграфа в индексе
 	position := 1
 
+	// Генерируем числовой ИД по алгоритму snowflake.
+	//ID := app.node.Generate()
 	// Генерируем UUID
-	ID := uuid.New()
+	//ID := uuid.New()
 	var filename = file.Name()
 	var extension = filepath.Ext(filename)
 	var name = filename[0 : len(filename)-len(extension)]
 
 	newBook, err := app.bs.Create(ctx, book.Book{
-		ID:       ID,
 		Name:     name,
 		Filename: filename,
 	})
@@ -52,6 +61,9 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 		log.Println(err)
 	}
 
+	var pars paragraph.PrepareParagraphs
+
+	param := 1
 	for {
 		text, err := r.Read()
 		if err == io.EOF {
@@ -63,16 +75,29 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 		// Если строка не пустая, то записываем в индекс
 		if text != "" {
 			parsedParagraph := paragraph.Paragraph{
-				ID:       uuid.New(),
+				ID:       app.node.Generate(),
 				BookID:   newBook.ID,
 				Text:     text,
 				Position: position,
 			}
 
-			app.ps.Create(ctx, &parsedParagraph)
+			//app.ps.Create(ctx, &parsedParagraph)
+			pars = append(pars, parsedParagraph)
 			position++
+			param++
+			if param == 2000 {
+				err = app.ps.BulkInsert(ctx, pars, param)
+				if err != nil {
+					log.Println(err)
+				}
+				// очищаем slice
+				pars = nil
+				param = 1
+			}
 		}
 	}
+
+	err = app.ps.BulkInsert(ctx, pars, len(pars))
 
 	log.Printf("%v #%v done", newBook.Filename, n+1)
 }
