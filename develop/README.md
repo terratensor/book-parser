@@ -1,5 +1,3 @@
-GOOS=windows GOARCH=amd64 go build -o ./book-parser-pg.exe ./develop/cmd/main.go (пояснить что это)
-
 ### Парсер docx в postgres
 
 Запустить из папки проекта `docker compose up --build -d`
@@ -64,3 +62,7 @@ gzip -d book-parser-backup-filename.gz
 psql -U app -d lib < book-parser-backup-filename.sql
 
 ```
+
+##### Сборка бинарника, нужно для разработки:
+
+GOOS=windows GOARCH=amd64 go build -o ./book-parser-pg.exe ./develop/cmd/main.go
