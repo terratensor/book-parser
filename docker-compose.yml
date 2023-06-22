@@ -1,8 +1,17 @@
 version: '3.5'
 
 services:
-  bs-manticore:
-    container_name: book-parser-manticore
+  registry:
+    image: registry:2
+    container_name: registry
+    ports:
+      - "5000:5000"
+    restart: always
+    networks:
+      - bp-public
+
+  book-parser-manticore:
+#    container_name: book-parser-manticore
     image: manticoresearch/manticore
     ports:
       - "127.0.0.1:9306:9306"
@@ -20,12 +29,18 @@ services:
       - manticore:/var/lib/manticore
       - manticore:/var/log/manticore
       - ./manticore/manticore.conf:/etc/manticoresearch/manticore.conf
+    networks:
+      - bp-public
 
-  postgres-book-parser:
-    container_name: book-parser-postgres
+  postgres:
+    image: ${REGISTRY:-localhost:5000}/postgres:latest
+#    container_name: book-parser-postgres
     build:
       context: ./docker/postgres
       dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "127.0.0.1:54322:5432"
     environment:
       APP_ENV: dev
       POSTGRES_USER: app
@@ -33,9 +48,28 @@ services:
       POSTGRES_DB: common-library
     volumes:
       - postgres-bp:/var/lib/postgresql/data
-    ports:
-      - "54322:5432"
+    networks:
+      - bp-public
+
+  book-parser-common:
+    image: ${REGISTRY:-localhost:5000}/book-parser-common:latest
+#    container_name: book-parser-common
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+    environment:
+      PG_DSN: "host=postgres user=app password=secret dbname=common-library port=5432 sslmode=disable TimeZone=Europe/Moscow"
+    networks:
+    - bp-public
+    depends_on:
+      - registry
+      - postgres
+      - book-parser-manticore
 
 volumes:
   postgres-bp:
   manticore:
+
+networks:
+  bp-public:
+    name: bp-public
