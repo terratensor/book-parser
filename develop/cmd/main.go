@@ -16,6 +16,9 @@ import (
 // outputPath путь по которому лежат книги для париснга
 var outputPath string
 
+// Default batch size
+var batchSize int
+
 func main() {
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 
@@ -26,6 +29,14 @@ func main() {
 		"./process/",
 		"путь хранения файлов для обработки",
 	)
+	flag.IntVarP(
+		&batchSize,
+		"batchSize",
+		"b",
+		3000,
+		"размер пакета по умолчанию (default batch size)",
+	)
+
 	flag.Parse()
 
 	var bookStore book.BookStore
@@ -68,7 +79,7 @@ func main() {
 		log.Fatal("unknown PARSER_STORE = ", storeType)
 	}
 
-	app := starter.NewApp(bookStore, paragraphStore)
+	app := starter.NewApp(bookStore, paragraphStore, batchSize)
 
 	// читаем все файлы в директории
 	files, err := os.ReadDir(outputPath)

@@ -28,7 +28,13 @@ type Paragraphs struct {
 }
 
 func NewParagraphs(dsn string) (*Paragraphs, error) {
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// Отключение авто транзакций для таблицы db_pg_paragraphs
+	// иначе, при медленных запросах (вставках) более 200 мс происходил откат rollback
+	// и данные не попадали в БД. Не удалось установить закономерность, при каждом новом прогоне,
+	// это могли быть новые данные, разные книги, т.е. это напрямую не связанно с какими либо конкретными параграфами
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		SkipDefaultTransaction: true,
+	})
 
 	db.AutoMigrate(&DBPgParagraph{})
 
