@@ -6,7 +6,6 @@ import (
 	"github.com/audetv/book-parser/common/app/repos/book"
 	"github.com/audetv/book-parser/common/app/repos/paragraph"
 	"github.com/audetv/book-parser/parser/docc"
-	"github.com/bwmarrin/snowflake"
 	"io"
 	"log"
 	"os"
@@ -17,21 +16,13 @@ import (
 type App struct {
 	bs        *book.Books
 	ps        *paragraph.Paragraphs
-	node      *snowflake.Node
 	batchSize int
 }
 
 func NewApp(bookStore book.BookStore, paragraphStore paragraph.ParagraphStore, batchSize int) *App {
-	// Создаём новый узел Node с номером 1 для генерации IDs по алгоритму snowflake
-	node, err := snowflake.NewNode(1)
-	if err != nil {
-		panic(err)
-	}
-
 	app := &App{
 		bs:        book.NewBooks(bookStore),
 		ps:        paragraph.NewParagraphs(paragraphStore),
-		node:      node,
 		batchSize: batchSize,
 	}
 	return app
