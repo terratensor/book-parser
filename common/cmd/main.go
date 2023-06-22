@@ -67,8 +67,10 @@ func main() {
 		if dsn == "" {
 			dsn = "host=localhost user=app password=secret dbname=common-library port=54322 sslmode=disable TimeZone=Europe/Moscow"
 		}
+		log.Println("подготовка соединения с базой данных")
 		pgBookStore, err := pgGormStore.NewBooks(dsn)
 		pgParagraphStore, err := pgGormStore.NewParagraphs(dsn)
+		log.Println("успешно завершено")
 
 		if err != nil {
 			log.Fatal(err)
