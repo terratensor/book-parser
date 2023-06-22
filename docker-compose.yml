@@ -2,6 +2,7 @@ version: '3.5'
 
 services:
   bs-manticore:
+    container_name: book-parser-manticore
     image: manticoresearch/manticore
     ports:
       - "127.0.0.1:9306:9306"
@@ -16,21 +17,25 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - ./manticore/data:/var/lib/manticore
-      - ./manticore/log:/var/log/manticore
+      - manticore:/var/lib/manticore
+      - manticore:/var/log/manticore
       - ./manticore/manticore.conf:/etc/manticoresearch/manticore.conf
 
   postgres-book-parser:
-    image: postgres:15.1-alpine
+    container_name: book-parser-postgres
+    build:
+      context: ./docker/postgres
+      dockerfile: Dockerfile
     environment:
       APP_ENV: dev
       POSTGRES_USER: app
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: book-parser
+      POSTGRES_DB: common-library
     volumes:
       - postgres-bp:/var/lib/postgresql/data
     ports:
-      - "54321:5432"
+      - "54322:5432"
 
 volumes:
   postgres-bp:
+  manticore:
