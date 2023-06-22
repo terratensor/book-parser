@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/audetv/book-parser/develop/app/repos/book"
-	"github.com/audetv/book-parser/develop/app/repos/paragraph"
-	"github.com/audetv/book-parser/develop/app/starter"
-	"github.com/audetv/book-parser/develop/db/sql/pgGormStore"
-	"github.com/audetv/book-parser/develop/db/sql/pgstore"
+	"github.com/audetv/book-parser/common/app/repos/book"
+	"github.com/audetv/book-parser/common/app/repos/paragraph"
+	"github.com/audetv/book-parser/common/app/starter"
+	"github.com/audetv/book-parser/common/db/sql/pgGormStore"
+	"github.com/audetv/book-parser/common/db/sql/pgstore"
 	flag "github.com/spf13/pflag"
 	"log"
 	"os"

@@ -3,7 +3,7 @@ package pgstore
 import (
 	"context"
 	"database/sql"
-	"github.com/audetv/book-parser/develop/app/repos/paragraph"
+	"github.com/audetv/book-parser/common/app/repos/paragraph"
 	_ "github.com/jackc/pgx/v4/stdlib" // Postgresql driver
 	"time"
 )

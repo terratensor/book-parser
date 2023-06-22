@@ -85,4 +85,4 @@ psql -U app -d lib < book-parser-backup-filename.sql
 
 ##### Сборка бинарника, нужно для разработки:
 
-`GOOS=windows GOARCH=amd64 go build -o ./book-parser-gorm.exe ./develop/cmd/main.go`
+`GOOS=windows GOARCH=amd64 go build -o ./book-parser-gorm.exe ./common/cmd/main.go`

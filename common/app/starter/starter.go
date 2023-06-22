@@ -3,8 +3,8 @@ package starter
 import (
 	"context"
 	"fmt"
-	"github.com/audetv/book-parser/develop/app/repos/book"
-	"github.com/audetv/book-parser/develop/app/repos/paragraph"
+	"github.com/audetv/book-parser/common/app/repos/book"
+	"github.com/audetv/book-parser/common/app/repos/paragraph"
 	"github.com/audetv/book-parser/parser/docc"
 	"github.com/bwmarrin/snowflake"
 	"io"

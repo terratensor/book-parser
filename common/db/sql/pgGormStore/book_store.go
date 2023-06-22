@@ -2,7 +2,7 @@ package pgGormStore
 
 import (
 	"context"
-	"github.com/audetv/book-parser/develop/app/repos/book"
+	"github.com/audetv/book-parser/common/app/repos/book"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"time"
