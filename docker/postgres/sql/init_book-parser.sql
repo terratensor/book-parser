@@ -24,6 +24,7 @@ CREATE TABLE public.book_paragraphs
 (
     id         bigint      NOT NULL,
     book_id    bigint      NOT NULL,
+    book_name  text,
     text       text,
     position   int,
     created_at timestamptz NOT NULL,
@@ -36,6 +37,7 @@ CREATE TABLE public.db_pg_paragraphs
 (
     id         bigserial   NOT NULL,
     book_id    int8        NOT NULL,
+    book_name  text,
     text       text,
     position   int,
     length     int,
