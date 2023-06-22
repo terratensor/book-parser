@@ -11,6 +11,7 @@ type PrepareParagraphs []Paragraph
 // Paragraph параграф книги
 type Paragraph struct {
 	BookID   uint
+	BookName string
 	Text     string
 	Position int
 	Length   int

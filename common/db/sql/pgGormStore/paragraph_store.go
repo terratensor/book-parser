@@ -15,6 +15,7 @@ type DBPgParagraphs []*DBPgParagraph
 type DBPgParagraph struct {
 	ID        uint `gorm:"primaryKey"`
 	BookID    uint
+	BookName  string
 	Text      string
 	Position  int
 	Length    int
@@ -50,6 +51,7 @@ func NewParagraphs(dsn string) (*Paragraphs, error) {
 func (ps *Paragraphs) Create(ctx context.Context, p *paragraph.Paragraph) error {
 	dbParagraph := DBPgParagraph{
 		BookID:    p.BookID,
+		BookName:  p.BookName,
 		Text:      p.Text,
 		Position:  p.Position,
 		Length:    p.Length,
@@ -68,6 +70,7 @@ func (ps *Paragraphs) BulkInsert(ctx context.Context, paragraphs []paragraph.Par
 	for _, p := range paragraphs {
 		dbParagraph := DBPgParagraph{
 			BookID:    p.BookID,
+			BookName:  p.BookName,
 			Text:      p.Text,
 			Position:  p.Position,
 			Length:    p.Length,

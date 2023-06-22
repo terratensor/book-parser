@@ -79,6 +79,7 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 
 			parsedParagraph := paragraph.Paragraph{
 				BookID:   newBook.ID,
+				BookName: newBook.Name,
 				Text:     text,
 				Position: position,
 				Length:   length,
@@ -93,7 +94,7 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 			if batchSizeCount == app.batchSize-1 {
 				err = app.ps.BulkInsert(ctx, pars, len(pars))
 				if err != nil {
-					log.Println(err)
+					log.Printf("log bulk insert error query: %v \r\n", err)
 				}
 				// очищаем slice
 				pars = nil
