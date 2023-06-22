@@ -57,6 +57,8 @@ services:
     build:
       context: ./
       dockerfile: ./docker/Dockerfile
+    volumes:
+      - ./process:/app/process
     environment:
       PG_DSN: "host=postgres user=app password=secret dbname=common-library port=5432 sslmode=disable TimeZone=Europe/Moscow"
     networks:
