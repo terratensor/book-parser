@@ -26,7 +26,7 @@ func main() {
 		&outputPath,
 		"output",
 		"o",
-		"./process/",
+		"./books/",
 		"путь хранения файлов для обработки",
 	)
 	flag.IntVarP(
@@ -50,8 +50,9 @@ func main() {
 	switch storeType {
 	case "gorm":
 		dsn := os.Getenv("PG_DSN")
+		log.Println(dsn)
 		if dsn == "" {
-			dsn = "host=localhost user=app password=secret dbname=common-library port=54322 sslmode=disable TimeZone=Europe/Moscow"
+			dsn = "host=localhost user=app password=secret dbname=vpsssr-library port=54323 sslmode=disable TimeZone=Europe/Moscow"
 		}
 		log.Println("подготовка соединения с базой данных")
 		pgBookStore, err := pgGormStore.NewBooks(dsn)
