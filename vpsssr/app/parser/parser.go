@@ -187,7 +187,7 @@ func (b *Builder) processParagraph(p string, position int) {
 		// Заменяем римское число в квадратных скобках на пустую строку, тэг <p> на <span>
 		// семантически неверно внутри тега p параграфа, помещать вложенные параграфы,
 		// поэтому меняем тег параграфа сноски на тег span
-		replacer := strings.NewReplacer(b.CurrentNote, "", "<p>", "<span>", "</p>", "</span>")
+		replacer := strings.NewReplacer(b.CurrentNote, "", "<div>", "<p>", "</div>", "</p>")
 		noteText := replacer.Replace(strings.TrimSpace(p))
 		// Соединяет строки сноски, все бывшие параграфы, теперь span в одну строку
 		result := strings.Join([]string{b.Notes.m[b.CurrentNote], noteText}, "")
@@ -201,7 +201,7 @@ func (b *Builder) mergeNotes() {
 			note := b.Notes.m[rn]
 
 			// Заменяем римское число на подготовленную сноску, заключенную в круглые скобки
-			replacer := strings.NewReplacer(rn, fmt.Sprintf("(%v)", note))
+			replacer := strings.NewReplacer(rn, fmt.Sprintf("<blockquote class=\"blockquote blockparagraph-note\">%v</blockquote>", note))
 			paragraph.Text = replacer.Replace(paragraph.Text)
 
 			// заменяем старый параграф, обработанным параграфом со вставленной в него сноской
