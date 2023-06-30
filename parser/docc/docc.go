@@ -214,7 +214,7 @@ func wrapperHtmlTag(headerTag string, t string) string {
 		t = fmt.Sprintf("<h6>%v</h6>", t)
 		headerTag = ""
 	default:
-		t = fmt.Sprintf("<p>%v</p>", t)
+		t = fmt.Sprintf("<div>%v</div>", t)
 	}
 	return t
 }
@@ -238,7 +238,7 @@ func getHeaderTag(value string) string {
 	case "Heading7":
 		tag = "h6"
 	default:
-		tag = "p"
+		tag = "div"
 	}
 	return tag
 }
