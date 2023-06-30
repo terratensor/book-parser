@@ -201,7 +201,7 @@ func (b *Builder) mergeNotes() {
 			note := b.Notes.m[rn]
 
 			// Заменяем римское число на подготовленную сноску, заключенную в круглые скобки
-			replacer := strings.NewReplacer(rn, fmt.Sprintf("(%v)", note))
+			replacer := strings.NewReplacer(rn, fmt.Sprintf("<blockquote class=\"blockquote blockparagraph-note\">%v</blockquote>", note))
 			paragraph.Text = replacer.Replace(paragraph.Text)
 
 			// заменяем старый параграф, обработанным параграфом со вставленной в него сноской
