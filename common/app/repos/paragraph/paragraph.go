@@ -3,6 +3,7 @@ package paragraph
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 )
 
 // PrepareParagraphs срез подготовленных параграфов книги
@@ -10,6 +11,7 @@ type PrepareParagraphs []Paragraph
 
 // Paragraph параграф книги
 type Paragraph struct {
+	Uuid     uuid.UUID
 	BookID   uint
 	BookName string
 	Text     string

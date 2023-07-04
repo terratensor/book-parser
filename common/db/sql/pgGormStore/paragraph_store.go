@@ -3,6 +3,7 @@ package pgGormStore
 import (
 	"context"
 	"github.com/audetv/book-parser/common/app/repos/paragraph"
+	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"time"
@@ -14,6 +15,7 @@ type DBPgParagraphs []*DBPgParagraph
 
 type DBPgParagraph struct {
 	ID        uint `gorm:"primaryKey"`
+	Uuid      uuid.UUID
 	BookID    uint
 	BookName  string
 	Text      string
@@ -50,6 +52,7 @@ func NewParagraphs(dsn string) (*Paragraphs, error) {
 
 func (ps *Paragraphs) Create(ctx context.Context, p *paragraph.Paragraph) error {
 	dbParagraph := DBPgParagraph{
+		Uuid:      p.Uuid,
 		BookID:    p.BookID,
 		BookName:  p.BookName,
 		Text:      p.Text,
@@ -69,6 +72,7 @@ func (ps *Paragraphs) BulkInsert(ctx context.Context, paragraphs []paragraph.Par
 	var dbPars DBPgParagraphs
 	for _, p := range paragraphs {
 		dbParagraph := DBPgParagraph{
+			Uuid:      p.Uuid,
 			BookID:    p.BookID,
 			BookName:  p.BookName,
 			Text:      p.Text,

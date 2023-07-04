@@ -6,6 +6,7 @@ import (
 	"github.com/audetv/book-parser/common/app/repos/book"
 	"github.com/audetv/book-parser/common/app/repos/paragraph"
 	"github.com/audetv/book-parser/parser/docc"
+	"github.com/google/uuid"
 	"io"
 	"log"
 	"os"
@@ -69,6 +70,7 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 			length := utf8.RuneCountInString(text)
 
 			parsedParagraph := paragraph.Paragraph{
+				Uuid:     uuid.New(),
 				BookID:   newBook.ID,
 				BookName: newBook.Name,
 				Text:     text,
