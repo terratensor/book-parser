@@ -11,20 +11,23 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"unicode/utf8"
 )
 
 type App struct {
-	bs        *book.Books
-	ps        *paragraph.Paragraphs
-	batchSize int
+	bs         *book.Books
+	ps         *paragraph.Paragraphs
+	batchSize  int
+	minParSize int
 }
 
-func NewApp(bookStore book.BookStore, paragraphStore paragraph.ParagraphStore, batchSize int) *App {
+func NewApp(bookStore book.BookStore, paragraphStore paragraph.ParagraphStore, batchSize int, minParSize int) *App {
 	app := &App{
-		bs:        book.NewBooks(bookStore),
-		ps:        paragraph.NewParagraphs(paragraphStore),
-		batchSize: batchSize,
+		bs:         book.NewBooks(bookStore),
+		ps:         paragraph.NewParagraphs(paragraphStore),
+		batchSize:  batchSize,
+		minParSize: minParSize,
 	}
 	return app
 }
@@ -53,6 +56,7 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 	}
 
 	var pars paragraph.PrepareParagraphs
+	var b strings.Builder
 
 	batchSizeCount := 0
 	for {
@@ -66,19 +70,16 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 		// Если строка не пустая, то записываем в индекс
 		if text != "" {
 
+			b.WriteString(text)
 			// Кол-во символов в параграфе
-			length := utf8.RuneCountInString(text)
+			length := utf8.RuneCountInString(b.String())
 
-			parsedParagraph := paragraph.Paragraph{
-				Uuid:     uuid.New(),
-				BookID:   newBook.ID,
-				BookName: newBook.Name,
-				Text:     text,
-				Position: position,
-				Length:   length,
+			if app.minParSize != 0 && length < app.minParSize {
+				continue
 			}
 
-			pars = append(pars, parsedParagraph)
+			pars = appendParagraph(b, newBook, position, pars)
+			b.Reset()
 
 			position++
 			batchSizeCount++
@@ -96,10 +97,30 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 		}
 	}
 
+	// Если билдер строки не пустой, записываем оставшийся текст в параграфы и сбрасываем билдер
+	if utf8.RuneCountInString(b.String()) > 0 {
+		pars = appendParagraph(b, newBook, position, pars)
+	}
+	b.Reset()
+
 	// Если batchSizeCount меньше batchSize, то записываем оставшиеся параграфы
 	if len(pars) > 0 {
 		err = app.ps.BulkInsert(ctx, pars, len(pars))
 	}
 
 	log.Printf("%v #%v done", newBook.Filename, n+1)
+}
+
+func appendParagraph(b strings.Builder, newBook *book.Book, position int, pars paragraph.PrepareParagraphs) paragraph.PrepareParagraphs {
+	parsedParagraph := paragraph.Paragraph{
+		Uuid:     uuid.New(),
+		BookID:   newBook.ID,
+		BookName: newBook.Name,
+		Text:     b.String(),
+		Position: position,
+		Length:   utf8.RuneCountInString(b.String()),
+	}
+
+	pars = append(pars, parsedParagraph)
+	return pars
 }
