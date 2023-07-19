@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/audetv/book-parser/common/app/repos/book"
 	"github.com/audetv/book-parser/common/app/repos/paragraph"
 	"github.com/audetv/book-parser/common/app/starter"
@@ -11,6 +12,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"time"
 )
 
 // outputPath путь по которому лежат книги для париснга
@@ -94,6 +96,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Срез ошибок полученных при обработке файлов
+	var errors []string
 	// итерируемся по списку файлов
 	for n, file := range files {
 		if file.IsDir() == false {
@@ -101,9 +105,34 @@ func main() {
 			if file.Name() == ".gitignore" {
 				continue
 			}
-			app.Parse(ctx, n, file, outputPath)
+			err = app.Parse(ctx, n, file, outputPath)
+			if err != nil {
+				errors = append(errors, fmt.Sprintln(err))
+				continue
+			}
 		}
 	}
 
+	saveErrors(errors)
 	log.Println("all files done")
+}
+
+func saveErrors(errors []string) {
+	if len(errors) > 0 {
+		// Создание файла для записи ошибок при обработке
+		currentTime := time.Now()
+		logfile := fmt.Sprintf("./%v_error_log.txt", currentTime.Format("15-04-05_02012006"))
+
+		f, err := os.OpenFile(logfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening file: %v", err)
+		}
+		defer f.Close()
+
+		for errorFile := range errors {
+			data := []byte(fmt.Sprintln(errorFile))
+			f.Write(data)
+		}
+		log.Println(err)
+	}
 }
