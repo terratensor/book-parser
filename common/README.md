@@ -79,8 +79,9 @@ psql -U app -d lib < book-parser-backup-filename.sql
 
 ```
 -h --help помощь
--b, --batchSize int   размер пакета по умолчанию (default batch size) (default 3000)
--o, --output string   путь хранения файлов для обработки (default "./process/")
+-b, --batchSize int    размер пакета по умолчанию (default batch size) (default 3000)
+-m, --minParSize int   граница минимального размера параграфа в символах, если 0, то без склейки параграфов (default 800)
+-o, --output string    путь хранения файлов для обработки (default "./process/")
 ```
 
 ##### Сборка бинарника, нужно для разработки:
