@@ -32,7 +32,7 @@ func NewApp(bookStore book.BookStore, paragraphStore paragraph.ParagraphStore, b
 	return app
 }
 
-func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string) {
+func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string) error {
 	fp := filepath.Clean(fmt.Sprintf("%v%v", path, file.Name()))
 	r, err := docc.NewReader(fp)
 	if err != nil {
@@ -64,7 +64,9 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			panic(err)
+			str := fmt.Sprintf("%v , %v", filename, err)
+			log.Println(str)
+			return fmt.Errorf(str)
 		}
 
 		// Если строка не пустая, то записываем в индекс
@@ -109,6 +111,7 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 	}
 
 	log.Printf("%v #%v done", newBook.Filename, n+1)
+	return nil
 }
 
 func appendParagraph(b strings.Builder, newBook *book.Book, position int, pars paragraph.PrepareParagraphs) paragraph.PrepareParagraphs {
