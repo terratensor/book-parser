@@ -133,6 +133,5 @@ func saveErrors(errors []string) {
 			data := []byte(fmt.Sprint(errorFile))
 			f.Write(data)
 		}
-		log.Println(err)
 	}
 }
