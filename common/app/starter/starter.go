@@ -34,18 +34,21 @@ func NewApp(bookStore book.BookStore, paragraphStore paragraph.ParagraphStore, b
 
 func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string) error {
 	fp := filepath.Clean(fmt.Sprintf("%v%v", path, file.Name()))
+
+	var filename = file.Name()
+	var extension = filepath.Ext(filename)
+	var name = filename[0 : len(filename)-len(extension)]
+
 	r, err := docc.NewReader(fp)
 	if err != nil {
-		panic(err)
+		str := fmt.Sprintf("%v, %v", filename, err)
+		log.Println(str)
+		return fmt.Errorf(str)
 	}
 	defer r.Close()
 
 	// position номер параграфа в индексе
 	position := 1
-
-	var filename = file.Name()
-	var extension = filepath.Ext(filename)
-	var name = filename[0 : len(filename)-len(extension)]
 
 	newBook, err := app.bs.Create(ctx, book.Book{
 		Name:     name,
@@ -64,7 +67,7 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			str := fmt.Sprintf("%v , %v", filename, err)
+			str := fmt.Sprintf("%v, %v", filename, err)
 			log.Println(str)
 			return fmt.Errorf(str)
 		}
