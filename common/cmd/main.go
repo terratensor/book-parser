@@ -129,7 +129,7 @@ func saveErrors(errors []string) {
 		}
 		defer f.Close()
 
-		for errorFile := range errors {
+		for _, errorFile := range errors {
 			data := []byte(fmt.Sprintln(errorFile))
 			f.Write(data)
 		}
