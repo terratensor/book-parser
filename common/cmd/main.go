@@ -42,7 +42,7 @@ func main() {
 		3000,
 		"размер пакета по умолчанию (default batch size)",
 	)
-	flag.IntVarP(&minParSize, "minParSize", "m", 800, "граница минимального размера параграфа в символах, если 0, то без склейки параграфов")
+	flag.IntVarP(&minParSize, "minParSize", "m", 1200, "граница минимального размера параграфа в символах, если 0, то без склейки параграфов")
 
 	flag.Parse()
 
@@ -133,6 +133,5 @@ func saveErrors(errors []string) {
 			data := []byte(fmt.Sprint(errorFile))
 			f.Write(data)
 		}
-		log.Println(err)
 	}
 }
