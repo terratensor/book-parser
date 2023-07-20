@@ -27,7 +27,7 @@ cd ./booksearch
 
 Клонировать репозиторий audetv/book-parser, набрать в консоли Git CMD:
 ```
-git clone https://github.com/audetv/book-parser.git
+git clone https://github.com/terratensor/book-parser
 ```
 Увидите текст, примерно такой:
 ```
