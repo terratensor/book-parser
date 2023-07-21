@@ -24,6 +24,8 @@ var batchSize int
 // Минимальный размер получаемого после обработки параграфа, указывается в кол-ве символов.
 // Значение по умолчанию 800 символов, если указано значение 0, то склейки параграфов не будет
 var minParSize int
+var optParSize int
+var maxParSize int
 
 func main() {
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -42,7 +44,9 @@ func main() {
 		3000,
 		"размер пакета по умолчанию (default batch size)",
 	)
-	flag.IntVarP(&minParSize, "minParSize", "m", 1200, "граница минимального размера параграфа в символах, если 0, то без склейки параграфов")
+	flag.IntVarP(&minParSize, "minParSize", "m", 300, "граница минимального размера параграфа в символах, если 0, то без склейки параграфов")
+	flag.IntVarP(&optParSize, "optParSize", "p", 1800, "граница оптимального размера параграфа в символах, если 0, то без склейки параграфов")
+	flag.IntVarP(&maxParSize, "maxParSize", "x", 3500, "граница максимального размера параграфа в символах, если 0, то без склейки параграфов")
 
 	flag.Parse()
 
@@ -88,7 +92,7 @@ func main() {
 		log.Fatal("unknown PARSER_STORE = ", storeType)
 	}
 
-	app := starter.NewApp(bookStore, paragraphStore, batchSize, minParSize)
+	app := starter.NewApp(bookStore, paragraphStore, batchSize, minParSize, optParSize, maxParSize)
 
 	// читаем все файлы в директории
 	files, err := os.ReadDir(outputPath)
