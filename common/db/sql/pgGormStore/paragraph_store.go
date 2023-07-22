@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"time"
 )
 
@@ -34,9 +35,11 @@ func NewParagraphs(dsn string) (*Paragraphs, error) {
 	// Отключение авто транзакций для таблицы db_pg_paragraphs
 	// иначе, при медленных запросах (вставках) более 200 мс происходил откат rollback
 	// и данные не попадали в БД. Не удалось установить закономерность, при каждом новом прогоне,
-	// это могли быть новые данные, разные книги, т.е. это напрямую не связанно с какими либо конкретными параграфами
+	// это могли быть новые данные, разные книги, т.е. это напрямую не связанно с какими либо конкретными параграфами.
+	// Включен режим логгера показывать только ошибки, предупреждения о запросах более 200 мс отключены
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		SkipDefaultTransaction: true,
+		Logger:                 logger.Default.LogMode(logger.Error),
 	})
 
 	db.AutoMigrate(&DBPgParagraph{})
