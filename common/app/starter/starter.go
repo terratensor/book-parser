@@ -109,6 +109,8 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 			if text == "" {
 				continue
 			}
+			// обрабатываем троеточия в получившемся оптимальном параграфе
+			text = processTriples(text)
 			// Если кол-во символов в тексте больше максимально установленной длины,
 			// записываем текст в буфер большого параграфа, иначе записываем текст в текстовый буфер
 			if utf8.RuneCountInString(text) > app.maxParSize {
@@ -308,7 +310,7 @@ func (app *App) splitLongParagraph(longBuilder *strings.Builder, builder *string
 	result = strings.TrimSuffix(result, "</div>")
 
 	// sentences []string Делим параграф на предложения, разделитель точка с пробелом
-	sentences := strings.SplitAfter(result, ". ")
+	sentences := strings.SplitAfter(result, ".")
 	//sentences := strings.SplitAfter(result, ".")
 
 	// Если включен режим разработки
@@ -339,7 +341,7 @@ func (app *App) splitLongParagraph(longBuilder *strings.Builder, builder *string
 				log.Printf("sentence %d", n)
 			}
 			builder.WriteString(sentence)
-			//builder.WriteString(" ")
+			builder.WriteString(" ")
 			continue
 		}
 		if !flag {
@@ -355,7 +357,7 @@ func (app *App) splitLongParagraph(longBuilder *strings.Builder, builder *string
 		}
 
 		longBuilder.WriteString(sentence)
-		//longBuilder.WriteString(" ")
+		longBuilder.WriteString(" ")
 
 	}
 	if utf8.RuneCountInString(longBuilder.String()) > 0 {
@@ -364,6 +366,14 @@ func (app *App) splitLongParagraph(longBuilder *strings.Builder, builder *string
 		longBuilder.WriteString(strings.TrimSpace(temp))
 		longBuilder.WriteString("</div>")
 	}
+}
+
+// processTriples функция обработки троеточий в итоговом спарсенном параграфе,
+// приводит все троеточия к виду …
+func processTriples(text string) string {
+	text = strings.Replace(text, ". . .", "…", -1)
+	text = strings.Replace(text, "...", "…", -1)
+	return text
 }
 
 func appendParagraph(b strings.Builder, newBook *book.Book, position int, pars paragraph.PrepareParagraphs) paragraph.PrepareParagraphs {

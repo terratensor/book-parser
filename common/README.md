@@ -75,12 +75,17 @@ psql -U app -d lib < book-parser-backup-filename.sql
 
 `docker compose down -v --remove-orphans`
 
+`./book-parser-common-dev-0.3.0.exe -m 1000 -p 1800 -x 3000 -o ./m/`
+
 ### Опции командной строки
 
 ```
 -h --help помощь
 -b, --batchSize int    размер пакета по умолчанию (default batch size) (default 3000)
--m, --minParSize int   граница минимального размера параграфа в символах, если 0, то без склейки параграфов (default 800)
+-d, --dev              подробный вывод служебной информации об обработке параграфов в лог консоли
+-x, --maxParSize int   граница максимального размера параграфа в символах (default 3500)
+-m, --minParSize int   граница минимального размера параграфа в символах (default 300)
+-p, --optParSize int   граница оптимального размера параграфа в символах (default 1800)
 -o, --output string    путь хранения файлов для обработки (default "./process/")
 ```
 
