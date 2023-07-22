@@ -22,6 +22,7 @@ type App struct {
 	minParSize int
 	optParSize int
 	maxParSize int
+	devMode    bool
 }
 
 func NewApp(
@@ -31,6 +32,7 @@ func NewApp(
 	minParSize int,
 	optParSize int,
 	maxParSize int,
+	devMode bool,
 ) *App {
 	app := &App{
 		bs:         book.NewBooks(bookStore),
@@ -39,6 +41,7 @@ func NewApp(
 		minParSize: minParSize,
 		optParSize: optParSize,
 		maxParSize: maxParSize,
+		devMode:    devMode,
 	}
 	return app
 }
@@ -109,39 +112,54 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 			// Если кол-во символов в тексте больше максимально установленной длины,
 			// записываем текст в буфер большого параграфа, иначе записываем текст в текстовый буфер
 			if utf8.RuneCountInString(text) > app.maxParSize {
-				log.Println("stage 1 — записываем спарсенный текст в буфер большого параграфа,")
+				// Если включен режим разработки
+				if app.devMode {
+					log.Println("stage 1 — записываем спарсенный текст в буфер большого параграфа,")
+				}
 				longParBuilder.WriteString(text)
 			} else {
-				log.Println("stage 2 — записываем спарсенный текст в текстовый буфер")
+				// Если включен режим разработки
+				if app.devMode {
+					log.Println("stage 2 — записываем спарсенный текст в текстовый буфер")
+				}
 				textBuilder.WriteString(text)
 			}
 		}
 
-		log.Printf("longParBuilder.Len() %v", utf8.RuneCountInString(longParBuilder.String()))
-		log.Printf("textBuilder.Len() %v", utf8.RuneCountInString(textBuilder.String()))
-		log.Printf("bBuilder.Len() %v", utf8.RuneCountInString(b.String()))
-		log.Printf("bufBuilder.len() %v", utf8.RuneCountInString(bufBuilder.String()))
+		// Если включен режим разработки
+		if app.devMode {
+			log.Printf("longParBuilder.Len() %v", utf8.RuneCountInString(longParBuilder.String()))
+			log.Printf("textBuilder.Len() %v", utf8.RuneCountInString(textBuilder.String()))
+			log.Printf("bBuilder.Len() %v", utf8.RuneCountInString(b.String()))
+			log.Printf("bufBuilder.len() %v", utf8.RuneCountInString(bufBuilder.String()))
+		}
 
 		// запись остатка от длинного параграфа в обычный билдер при условии, что остаток менее maxParSize
 		if utf8.RuneCountInString(longParBuilder.String()) > 0 && utf8.RuneCountInString(longParBuilder.String()) < app.maxParSize {
-			//log.Println(utf8.RuneCountInString(b.String()))
-			//log.Println(utf8.RuneCountInString(longParBuilder.String()))
-			log.Println("stage 3 — запись остатка от длинного параграфа в обычный билдер")
+			// Если включен режим разработки
+			if app.devMode {
+				log.Println("stage 3 — запись остатка от длинного параграфа в обычный билдер")
+			}
 			b.WriteString(longParBuilder.String())
 			longParBuilder.Reset()
-			//panic("exit")
 		}
-		// Если кол-во символов текста в билдере больше максимальной границы maxParSize
+		// Если кол-во символов текста в билдер буфере большого параграфа больше максимальной границы maxParSize
 		// разбиваем параграф на 2 части, оптимальной длины и остаток,
 		// остаток сохраняем в longParBuilder, оптимальную часть сохраняем в builder b
 		if utf8.RuneCountInString(longParBuilder.String()) >= app.maxParSize {
-			log.Println("stage 4 — разбиваем параграф на 2 части, оптимальной длины и остаток")
+			// Если включен режим разработки
+			if app.devMode {
+				log.Println("stage 4 — разбиваем параграф на 2 части, оптимальной длины и остаток")
+			}
 			app.splitLongParagraph(&longParBuilder, &b)
 		}
 
 		// Если в билдер-буфере есть записанный параграф, то записываем его в обычный билдер b и очищаем билдер-буфер
 		if utf8.RuneCountInString(bufBuilder.String()) > 0 {
-			log.Println("stage 5 — записываем bufBuilder в обычный билдер b и очищаем билдер-буфер")
+			// Если включен режим разработки
+			if app.devMode {
+				log.Println("stage 5 — записываем bufBuilder в обычный билдер b и очищаем билдер-буфер")
+			}
 			if utf8.RuneCountInString(bufBuilder.String()) >= app.maxParSize {
 				log.Println("stage 6")
 				log.Printf("в билдер буфере длинный параграф %v\r\n", utf8.RuneCountInString(bufBuilder.String()))
@@ -151,15 +169,24 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 			bufBuilder.Reset()
 		}
 
-		// Кол-во символов в билдере, получено от предыдущей итерации
+		// Кол-во символов в билдере, получено от предыдущей или текущей итерации
 		builderLength := utf8.RuneCountInString(b.String())
-		//log.Printf("builderLength %v", builderLength)
+		// Если включен режим разработки
+		if app.devMode {
+			log.Printf("builderLength %v", builderLength)
+		}
 		// Кол-во символов в текущем обрабатываемом параграфе, получено из парсера
 		textLength := utf8.RuneCountInString(textBuilder.String())
-		//log.Printf("textLength %v", textLength)
+		// Если включен режим разработки
+		if app.devMode {
+			log.Printf("textLength %v", textLength)
+		}
 		// Сумма кол-ва символов в предыдущих склеенных и в текущем параграфах
 		concatLength := builderLength + textLength
-		log.Printf("concatLength %v", concatLength)
+		// Если включен режим разработки
+		if app.devMode {
+			log.Printf("concatLength %v", concatLength)
+		}
 
 		// Если кол-во символов в результирующей строке concatLength менее
 		// минимального значения длины параграфа minParSize,
@@ -169,8 +196,10 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 
 		// и нет длинного параграфа в обработке
 		if concatLength < app.minParSize && utf8.RuneCountInString(longParBuilder.String()) == 0 {
-			log.Println("stage 7")
-			//log.Println("cond 3")
+			// Если включен режим разработки
+			if app.devMode {
+				log.Println("stage 7")
+			}
 			b.WriteString(textBuilder.String())
 			textBuilder.Reset()
 			continue
@@ -184,47 +213,52 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 		if concatLength >= app.minParSize &&
 			float64(concatLength) <= float64(app.optParSize)*1.05 &&
 			utf8.RuneCountInString(longParBuilder.String()) == 0 {
-			log.Println("stage 8")
-			// Производим расчет длины текущего параграфа и предыдущих параграфов,
-			// набранных до минимального значения границы длины параграфа minParSize
+			// Если включен режим разработки
+			if app.devMode {
+				log.Println("stage 8")
+			}
 			b.WriteString(textBuilder.String())
 			textBuilder.Reset()
 			continue
 		}
 
 		if concatLength > app.optParSize && concatLength <= app.maxParSize {
-			log.Println("stage 9")
+			// Если включен режим разработки
+			if app.devMode {
+				log.Println("stage 9")
+			}
 			b.WriteString(textBuilder.String())
 			textBuilder.Reset()
-			//if utf8.RuneCountInString(b.String()) == 0 {
-			//	log.Println("stage 10")
-			//	continue
-			//}
 		}
 
-		if utf8.RuneCountInString(b.String()) >= app.maxParSize {
-			if utf8.RuneCountInString(longParBuilder.String()) == 0 {
-				log.Println("stage 11 — параграф превышает максимальную длину")
-				//longParBuilder.WriteString(b.String())
-				log.Println(b.String())
-				//b.Reset()
-				//panic("exit")
+		// Если включен режим разработки
+		if app.devMode {
+			if utf8.RuneCountInString(b.String()) >= app.maxParSize {
+				if utf8.RuneCountInString(longParBuilder.String()) == 0 {
+					log.Println("stage 11 — параграф превышает максимальную длину")
+					//longParBuilder.WriteString(b.String())
+					log.Println(b.String())
+					//b.Reset()
+					//panic("exit")
 
+				}
+				//log.Println("stage 12 — параграф превышает максимальную длину")
+				//log.Printf("параграф превышает максимальную длину: %v", utf8.RuneCountInString(b.String()))
+				//log.Printf("параграф превышает максимальную длину: %v", b.String())
+				//log.Printf("longParBuilder.Len() %v", utf8.RuneCountInString(longParBuilder.String()))
+				//log.Printf("textBuilder.Len() %v", utf8.RuneCountInString(textBuilder.String()))
+				//log.Printf("bBuilder.Len() %v", utf8.RuneCountInString(b.String()))
+				//log.Printf("bufBuilder.len() %v", utf8.RuneCountInString(bufBuilder.String()))
+				//panic("exit")
+				//panic(b.String())
 			}
-			//log.Println("stage 12 — параграф превышает максимальную длину")
-			//log.Printf("параграф превышает максимальную длину: %v", utf8.RuneCountInString(b.String()))
-			//log.Printf("параграф превышает максимальную длину: %v", b.String())
-			//log.Printf("longParBuilder.Len() %v", utf8.RuneCountInString(longParBuilder.String()))
-			//log.Printf("textBuilder.Len() %v", utf8.RuneCountInString(textBuilder.String()))
-			//log.Printf("bBuilder.Len() %v", utf8.RuneCountInString(b.String()))
-			//log.Printf("bufBuilder.len() %v", utf8.RuneCountInString(bufBuilder.String()))
-			//panic("exit")
-			//panic(b.String())
 		}
 
 		pars = appendParagraph(b, newBook, position, pars)
-		//textBuilder.Reset()
-		log.Println("stage 100 append")
+		// Если включен режим разработки
+		if app.devMode {
+			log.Println("stage 100 append")
+		}
 		b.Reset()
 
 		position++
@@ -245,7 +279,10 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 
 	// Если билдер строки не пустой, записываем оставшийся текст в параграфы и сбрасываем билдер
 	if utf8.RuneCountInString(b.String()) > 0 {
-		log.Printf("cond 111111111111: %v", utf8.RuneCountInString(b.String()))
+		// Если включен режим разработки
+		if app.devMode {
+			log.Printf("cond 10000: %v", utf8.RuneCountInString(b.String()))
+		}
 		pars = appendParagraph(b, newBook, position, pars)
 	}
 	b.Reset()
@@ -260,8 +297,11 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 }
 
 func (app *App) splitLongParagraph(longBuilder *strings.Builder, builder *strings.Builder) {
-	log.Printf("Обрабатываем длинный параграф: %v", utf8.RuneCountInString(longBuilder.String()))
-	log.Printf("длина билдер буфера: %v", utf8.RuneCountInString(builder.String()))
+	// Если включен режим разработки
+	if app.devMode {
+		log.Printf("Обрабатываем длинный параграф: %v", utf8.RuneCountInString(longBuilder.String()))
+		log.Printf("длина билдер буфера: %v", utf8.RuneCountInString(builder.String()))
+	}
 
 	result := longBuilder.String()
 	result = strings.TrimPrefix(result, "<div>")
@@ -270,31 +310,38 @@ func (app *App) splitLongParagraph(longBuilder *strings.Builder, builder *string
 	// sentences []string Делим параграф на предложения
 	sentences := strings.SplitAfter(result, ".")
 
-	log.Printf("В параграфе %v предложений", len(sentences))
+	// Если включен режим разработки
+	if app.devMode {
+		log.Printf("В параграфе %v предложений", len(sentences))
+	}
 
 	longBuilder.Reset()
-	//log.Printf("сброшен longBuilder.String() %v", longBuilder.String())
+	// Если включен режим разработки
+	if app.devMode {
+		log.Printf("сброшен longBuilder.String() %v", longBuilder.String())
+	}
 
-	//var buffer strings.Builder
 	var flag bool
 
 	for n, sentence := range sentences {
-		//log.Printf("предложение длина: %v", utf8.RuneCountInString(sentence))
+		// Если включен режим разработки
+		if app.devMode {
+			log.Printf("предложение длина: %v", utf8.RuneCountInString(sentence))
+		}
 		sentence = strings.TrimSpace(sentence)
 		if n == 0 {
 			builder.WriteString("<div>")
-			//if utf8.RuneCountInString(sentence) > app.optParSize && utf8.RuneCountInString(sentence) < app.minParSize{
-			//	builder.WriteString(sentence)
-			//}
 		}
 		if (utf8.RuneCountInString(builder.String()) + utf8.RuneCountInString(sentence)) < app.optParSize {
-			//log.Printf("sentence %d", n)
+			// Если включен режим разработки
+			if app.devMode {
+				log.Printf("sentence %d", n)
+			}
 			builder.WriteString(sentence)
 			builder.WriteString(" ")
 			continue
 		}
 		if !flag {
-			//builder.WriteString(strings.TrimSpace(builder.String()))
 			builder.WriteString(strings.TrimSpace(sentence))
 			builder.WriteString("</div>")
 			flag = true
