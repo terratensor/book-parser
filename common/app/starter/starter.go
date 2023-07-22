@@ -307,8 +307,9 @@ func (app *App) splitLongParagraph(longBuilder *strings.Builder, builder *string
 	result = strings.TrimPrefix(result, "<div>")
 	result = strings.TrimSuffix(result, "</div>")
 
-	// sentences []string Делим параграф на предложения
-	sentences := strings.SplitAfter(result, ".")
+	// sentences []string Делим параграф на предложения, разделитель точка с пробелом
+	sentences := strings.SplitAfter(result, ". ")
+	//sentences := strings.SplitAfter(result, ".")
 
 	// Если включен режим разработки
 	if app.devMode {
@@ -338,7 +339,7 @@ func (app *App) splitLongParagraph(longBuilder *strings.Builder, builder *string
 				log.Printf("sentence %d", n)
 			}
 			builder.WriteString(sentence)
-			builder.WriteString(" ")
+			//builder.WriteString(" ")
 			continue
 		}
 		if !flag {
@@ -354,7 +355,7 @@ func (app *App) splitLongParagraph(longBuilder *strings.Builder, builder *string
 		}
 
 		longBuilder.WriteString(sentence)
-		longBuilder.WriteString(" ")
+		//longBuilder.WriteString(" ")
 
 	}
 	if utf8.RuneCountInString(longBuilder.String()) > 0 {
