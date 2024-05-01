@@ -294,7 +294,7 @@ func (app *App) Parse(ctx context.Context, n int, file os.DirEntry, path string)
 		err = app.ps.BulkInsert(ctx, pars, len(pars))
 	}
 
-	log.Printf("%v #%v done", newBook.Filename, n+1)
+	//log.Printf("%v #%v done", newBook.Filename, n+1)
 	return nil
 }
 
