@@ -29,3 +29,8 @@ push:
 
 kob-library-build:
 	docker --log-level=debug build --pull --file=docker/kob/Dockerfile --tag=${REGISTRY}/kob-library-parser:${IMAGE_TAG} .
+
+
+build-common-parser:
+	GOOS=windows GOARCH=amd64 go build -o ./build/book-parser.exe ./common/cmd/main.go
+	GOOS=linux GOARCH=amd64 go build -o ./build/book-parser.linux.amd64 ./common/cmd/main.go

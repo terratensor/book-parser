@@ -6,6 +6,7 @@ import (
 	"github.com/audetv/book-parser/common/app/repos/book"
 	"github.com/audetv/book-parser/common/app/repos/paragraph"
 	"github.com/audetv/book-parser/common/app/starter"
+	"github.com/audetv/book-parser/common/app/workerpool"
 	"github.com/audetv/book-parser/common/db/sql/pgGormStore"
 	"github.com/audetv/book-parser/common/db/sql/pgstore"
 	flag "github.com/spf13/pflag"
@@ -105,20 +106,35 @@ func main() {
 
 	// Срез ошибок полученных при обработке файлов
 	var errors []string
-	// итерируемся по списку файлов
+
+	var allTask []*workerpool.Task
+
 	for n, file := range files {
 		if file.IsDir() == false {
+
 			// если файл gitignore, то ничего не делаем пропускаем и продолжаем цикл
 			if file.Name() == ".gitignore" {
 				continue
 			}
-			err = app.Parse(ctx, n, file, outputPath)
-			if err != nil {
-				errors = append(errors, fmt.Sprintln(err))
-				continue
-			}
+
+			task := workerpool.NewTask(func(data interface{}) error {
+
+				fmt.Printf("Task %v processed\n", file.Name())
+
+				err = app.Parse(ctx, n, file, outputPath)
+				if err != nil {
+					return err
+				}
+				return nil
+			}, file)
+			allTask = append(allTask, task)
+
+			errors = append(errors, fmt.Sprintln(err))
 		}
 	}
+	defer duration(track("Обработка завершена за "))
+	pool := workerpool.NewPool(allTask, 12)
+	pool.Run()
 
 	saveErrors(errors)
 	log.Println("all files done")
@@ -141,4 +157,12 @@ func saveErrors(errors []string) {
 			f.Write(data)
 		}
 	}
+}
+
+func track(msg string) (string, time.Time) {
+	return msg, time.Now()
+}
+
+func duration(msg string, start time.Time) {
+	log.Printf("%v: %v\n", msg, time.Since(start))
 }
