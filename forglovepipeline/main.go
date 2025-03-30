@@ -101,11 +101,15 @@ func processBookFile(filePath string) (string, error) {
 
 // preprocessText выполняет предварительную обработку текста
 func preprocessText(text string) string {
+	// Удаляем метки с римскими цифрами в квадратных скобках
+	romanNumeralRegex := regexp.MustCompile(`\[[MDCLXVI]+\]`)
+	text = romanNumeralRegex.ReplaceAllString(text, "")
+
 	// Приводим к нижнему регистру
 	text = strings.ToLower(text)
 
 	// Удаляем специальные символы, оставляем только буквы, цифры и пробелы
-	reg := regexp.MustCompile(`[^а-яё0-9\s]`)
+	reg := regexp.MustCompile(`[^\p{L}\p{N}\s]`)
 	text = reg.ReplaceAllString(text, " ")
 
 	// Заменяем множественные пробелы на одинарные
